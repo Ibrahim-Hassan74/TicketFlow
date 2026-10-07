@@ -1,5 +1,6 @@
 using SupportTicketManagement.Core.Domain.IdentityEntities;
 using SupportTicketManagement.Core.Enums;
+using SupportTicketManagement.Domain.Exceptions;
 
 namespace SupportTicketManagement.Core.Domain.Entities
 {
@@ -17,7 +18,7 @@ namespace SupportTicketManagement.Core.Domain.Entities
 
         public Guid CustomerId { get; set; }
 
-        public Guid? AssignedAgentId { get; set; }
+        public Guid? AssignedAgentId { get; private set; }
 
         public DateTimeOffset CreatedAt { get; set; }
 
@@ -39,5 +40,14 @@ namespace SupportTicketManagement.Core.Domain.Entities
         public ICollection<TicketActivity> Activities { get; set; } = new List<TicketActivity>();
 
         public ICollection<TimeEntry> TimeEntries { get; set; } = new List<TimeEntry>();
+
+        public void AssignAgent(Guid agentId)
+        {
+            if (Status == TicketStatus.Closed)
+            {
+                throw new DomainValidationException("Cannot assign an agent to a ticket that is already closed.");
+            }
+            AssignedAgentId = agentId;
+        }
     }
 }
