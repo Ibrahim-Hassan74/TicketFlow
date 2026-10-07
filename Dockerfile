@@ -3,19 +3,19 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
 WORKDIR /src
 
 # Copy solution and project files first (for layer caching)
-COPY SupportTicketManagement.slnx .
-COPY SupportTicketManagement.API/SupportTicketManagement.API.csproj SupportTicketManagement.API/
-COPY SupportTicketManagement.Core/SupportTicketManagement.Core.csproj SupportTicketManagement.Core/
-COPY SupportTicketManagement.Infrastructure/SupportTicketManagement.Infrastructure.csproj SupportTicketManagement.Infrastructure/
+COPY TicketFlow.slnx .
+COPY TicketFlow.API/TicketFlow.API.csproj TicketFlow.API/
+COPY TicketFlow.Core/TicketFlow.Core.csproj TicketFlow.Core/
+COPY TicketFlow.Infrastructure/TicketFlow.Infrastructure.csproj TicketFlow.Infrastructure/
 
 # Restore dependencies
-RUN dotnet restore SupportTicketManagement.slnx
+RUN dotnet restore TicketFlow.slnx
 
 # Copy everything else
 COPY . .
 
 # Build and publish
-RUN dotnet publish SupportTicketManagement.API/SupportTicketManagement.API.csproj \
+RUN dotnet publish TicketFlow.API/TicketFlow.API.csproj \
     -c Release \
     -o /app/publish \
     --no-restore
@@ -43,4 +43,4 @@ USER appuser
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8080/swagger/index.html || exit 1
 
-ENTRYPOINT ["dotnet", "SupportTicketManagement.API.dll"]
+ENTRYPOINT ["dotnet", "TicketFlow.API.dll"]
