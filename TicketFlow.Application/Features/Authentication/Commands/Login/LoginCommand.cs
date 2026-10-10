@@ -1,10 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using MediatR;
+using TicketFlow.Application.Features.Authentication.DTOs;
 
 namespace TicketFlow.Application.Features.Authentication.Commands.Login
 {
-    internal class LoginCommand
+    public sealed class LoginCommand : IRequest<AuthenticationResponse>
     {
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public bool RememberMe { get; set; } = false;
     }
 }
