@@ -12,6 +12,7 @@
     <PackageReference Include="FluentValidation" Version="12.1.1" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageReference Include="MediatR" Version="14.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.3.12" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,6 +23,10 @@
     <Folder Include="Features\TimeEntries\Queries\" />
     <Folder Include="Features\Users\Commands\" />
     <Folder Include="Features\Users\Queries\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TicketFlow.Domain\TicketFlow.Domain.csproj" />
   </ItemGroup>
 
 </Project>
