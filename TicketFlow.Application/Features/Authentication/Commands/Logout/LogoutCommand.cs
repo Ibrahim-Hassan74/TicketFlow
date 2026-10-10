@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using MediatR;
 
 namespace TicketFlow.Application.Features.Authentication.Commands.Logout
 {
-    internal class LogoutCommand
+    public class LogoutCommand : IRequest
     {
+        public Guid Id { get; set; }
     }
 }
