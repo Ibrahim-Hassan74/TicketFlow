@@ -3,13 +3,13 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using TicketFlow.Application.Common.Exceptions;
+using TicketFlow.Application.Common.Interfaces;
 using TicketFlow.Application.Features.Authentication.DTOs;
-using TicketFlow.Application.Interfaces;
 using TicketFlow.Domain.IdentityEntities;
 
 namespace TicketFlow.Application.Features.Authentication.Commands.RefreshToken
 {
-    public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, AuthenticationResponse>
+    public sealed class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, AuthenticationResponse>
     {
         private readonly IJwtService _jwtService;
         private readonly UserManager<ApplicationUser> _userManager;

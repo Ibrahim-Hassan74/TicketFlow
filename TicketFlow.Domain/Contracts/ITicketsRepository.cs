@@ -1,8 +1,7 @@
-using SupportTicketManagement.Core.Domain.Entities;
-using SupportTicketManagement.Core.DTO;
+using TicketFlow.Domain.Entities;
 using System.Linq.Expressions;
 
-namespace SupportTicketManagement.Domain.Contracts
+namespace TicketFlow.Domain.Contracts
 {
     public interface ITicketsRepository : IGenericRepository<Ticket>
     {
@@ -14,9 +13,5 @@ namespace SupportTicketManagement.Domain.Contracts
             params Expression<Func<Ticket, object>>[] includes);
 
         Task<int> CountFilteredTicketsAsync(Expression<Func<Ticket, bool>>? predicate);
-
-        Task<DashboardStatsResponse> GetDashboardStatsAsync();
-        Task<IEnumerable<AgentWorkloadResponse>> GetAgentWorkloadAsync();
-        Task<IEnumerable<TicketTrendResponse>> GetTicketTrendsAsync(int days);
     }
 }
