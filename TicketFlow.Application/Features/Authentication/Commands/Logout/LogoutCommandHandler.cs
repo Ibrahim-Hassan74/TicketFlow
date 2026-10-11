@@ -4,7 +4,7 @@ using TicketFlow.Domain.IdentityEntities;
 
 namespace TicketFlow.Application.Features.Authentication.Commands.Logout
 {
-    public class LogoutCommandHandler : IRequestHandler<LogoutCommand>
+    public sealed class LogoutCommandHandler : IRequestHandler<LogoutCommand>
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;

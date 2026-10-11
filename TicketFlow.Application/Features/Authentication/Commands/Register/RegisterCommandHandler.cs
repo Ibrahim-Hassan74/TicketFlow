@@ -9,7 +9,7 @@ using TicketFlow.Domain.IdentityEntities;
 
 namespace TicketFlow.Application.Features.Authentication.Commands.Register
 {
-    public class RegisterCommandHandler : IRequestHandler<RegisterCommand, RegisterResponse>
+    public sealed class RegisterCommandHandler : IRequestHandler<RegisterCommand, RegisterResponse>
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<RegisterCommandHandler> _logger;

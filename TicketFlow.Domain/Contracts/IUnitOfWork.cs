@@ -1,4 +1,4 @@
-namespace SupportTicketManagement.Domain.Contracts
+namespace TicketFlow.Domain.Contracts
 {
     public interface IUnitOfWork
     {

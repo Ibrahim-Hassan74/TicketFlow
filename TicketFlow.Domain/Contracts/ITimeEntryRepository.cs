@@ -1,6 +1,6 @@
-using SupportTicketManagement.Core.Domain.Entities;
+using TicketFlow.Domain.Entities;
 
-namespace SupportTicketManagement.Domain.Contracts
+namespace TicketFlow.Domain.Contracts
 {
     public interface ITimeEntryRepository : IGenericRepository<TimeEntry>
     {
