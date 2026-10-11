@@ -1,4 +1,5 @@
 ﻿using TicketFlow.Application.Common.Models;
+using TicketFlow.Application.Features.Authentication.DTOs;
 
 namespace TicketFlow.Application.Common.Helpers
 {
@@ -155,7 +156,7 @@ namespace TicketFlow.Application.Common.Helpers
         /// <summary>
         /// Generates query parameters for authentication redirect.
         /// </summary>
-        public static Dictionary<string, string?> BuildAuthQueryParams(ApiSuccessResponse res)
+        public static Dictionary<string, string?> BuildAuthQueryParams(AuthenticationResponse res)
         {
             return new Dictionary<string, string?>
             {
