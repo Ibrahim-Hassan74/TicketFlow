@@ -20,8 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SupportTicketManagement.Core\SupportTicketManagement.Core.csproj" />
-    <ProjectReference Include="..\SupportTicketManagement.Infrastructure\SupportTicketManagement.Infrastructure.csproj" />
+    <ProjectReference Include="..\TicketFlow.Core\TicketFlow.Core.csproj" />
+    <ProjectReference Include="..\TicketFlow.Infrastructure\TicketFlow.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

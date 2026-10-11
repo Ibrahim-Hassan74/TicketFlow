@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
-using TicketFlow.Application.Interfaces;
+using TicketFlow.Application.Common.Interfaces;
 
 namespace TicketFlow.Application.Common.Behaviors
 {
