@@ -1,10 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using MediatR;
+using TicketFlow.Application.Features.Comments.DTOs;
 
-namespace SupportTicketManagement.Application.Features.Comments.Commands.AddComment
+namespace TicketFlow.Application.Features.Comments.Commands.AddComment
 {
-    internal class AddCommentCommand
+    public sealed class AddCommentCommand : IRequest<AddCommentResponse>
     {
+        public string Content { get; set; } = string.Empty;
+        public Guid TicketId { get; set; }
+        public Guid UserId { get; set; }
+        public string Role { get; set; } = string.Empty;
     }
 }
