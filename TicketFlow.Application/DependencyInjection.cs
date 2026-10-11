@@ -3,6 +3,8 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using TicketFlow.Application.Common.Behaviors;
+using TicketFlow.Application.Common.Interfaces;
+using TicketFlow.Application.Common.Services;
 
 namespace TicketFlow.Application
 {
@@ -20,6 +22,8 @@ namespace TicketFlow.Application
             });
 
             services.AddValidatorsFromAssembly(assembly);
+
+            services.AddScoped<ITicketAuthorizationService, TicketAuthorizationService>();
 
             return services;
         }

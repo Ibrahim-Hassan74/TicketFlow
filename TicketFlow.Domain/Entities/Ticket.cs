@@ -49,5 +49,13 @@ namespace TicketFlow.Domain.Entities
             }
             AssignedAgentId = agentId;
         }
+
+        public bool CanBeAccessedBy(Guid userId, string role)
+        {
+            if (role == UserRole.Admin.ToString()) return true;
+            if (role == UserRole.SupportAgent.ToString()) return AssignedAgentId == userId;
+            if (role == UserRole.Customer.ToString()) return CustomerId == userId;
+            return false;
+        }
     }
 }
