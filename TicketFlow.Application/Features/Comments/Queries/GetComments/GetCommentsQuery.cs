@@ -1,10 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using MediatR;
+using TicketFlow.Application.Features.Comments.DTOs;
 
 namespace TicketFlow.Application.Features.Comments.Queries.GetComments
 {
-    internal class GetCommentsQuery
+    public class GetCommentsQuery : IRequest<IEnumerable<CommentResponse>>
     {
+        public Guid TicketId { get; set; }
+        public Guid UserId { get; set; }
+        public string Role { get; set; } = string.Empty;
     }
 }
