@@ -22,11 +22,11 @@ namespace TicketFlow.Application.Features.Dashboard.Queries.GetStats
         {
             if (request.Role != nameof(UserRole.Admin))
             {
-                _logger.LogWarning("Forbidden access attempt to Dashboard Stats by role {Role}.", role);
+                _logger.LogWarning("Forbidden access attempt to Dashboard Stats by role {Role}.", request.Role);
                 throw new ForbiddenException("Only administrators can access dashboard metrics.");
             }
 
-            var stats = await _dashboardRepository.GetDashboardStatsAsync();
+            var stats = await _dashboardRepository.GetDashboardStatsAsync(cancellationToken);
             return  stats;
         }
     }

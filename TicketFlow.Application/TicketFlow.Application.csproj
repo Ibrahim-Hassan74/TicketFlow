@@ -16,7 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\Dashboard\Queries\GetAgentWorkload\" />
     <Folder Include="Features\Dashboard\Queries\GetTicketTrends\" />
     <Folder Include="Features\Tickets\Commands\" />
     <Folder Include="Features\Tickets\Queries\" />
