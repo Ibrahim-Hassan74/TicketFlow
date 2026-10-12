@@ -1,6 +1,5 @@
 ﻿using TicketFlow.Application.Common.Interfaces;
 using TicketFlow.Domain.Contracts;
-using TicketFlow.Domain.Enums;
 
 namespace TicketFlow.Application.Common.Services
 {
