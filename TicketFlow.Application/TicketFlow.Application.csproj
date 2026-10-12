@@ -18,7 +18,7 @@
   <ItemGroup>
     <Folder Include="Features\Tickets\Commands\" />
     <Folder Include="Features\Tickets\Queries\" />
-    <Folder Include="Features\Users\Commands\" />
+    <Folder Include="Features\Users\Commands\UpdateUser\" />
     <Folder Include="Features\Users\Queries\" />
   </ItemGroup>
 
