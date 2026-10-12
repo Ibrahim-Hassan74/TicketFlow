@@ -8,7 +8,7 @@ using TicketFlow.Domain.Contracts;
 
 namespace TicketFlow.Application.Features.Comments.Queries.GetComments
 {
-    public class GetCommentsQueryHandler : IRequestHandler<GetCommentsQuery, IEnumerable<CommentResponse>>
+    public sealed class GetCommentsQueryHandler : IRequestHandler<GetCommentsQuery, IEnumerable<CommentResponse>>
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<GetCommentsQueryHandler> _logger;
