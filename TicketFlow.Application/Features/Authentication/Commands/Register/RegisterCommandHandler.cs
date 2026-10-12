@@ -46,7 +46,7 @@ namespace TicketFlow.Application.Features.Authentication.Commands.Register
             {
                 _logger.LogWarning("Registration failed for email {Email} due to identity errors.", request.Email);
 
-                throw new RegistrationFailedException(result.Errors.Select(e => e.Description).ToArray());
+                throw new RegistrationFailedException("Registration failed.", result.Errors.Select(e => e.Description).ToArray());
             }
 
             if(!await _roleManager.RoleExistsAsync(UserRole.Customer.ToString()))

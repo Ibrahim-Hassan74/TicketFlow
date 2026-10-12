@@ -1,6 +1,6 @@
 ﻿namespace TicketFlow.Application.Common.Exceptions
 {
-    public class RegistrationFailedException(IEnumerable<string> errors) : Exception("Registration failed.")
+    public class RegistrationFailedException(string message, IEnumerable<string> errors) : Exception(message)
     {
         public IEnumerable<string> Errors { get; } = errors;
     }
