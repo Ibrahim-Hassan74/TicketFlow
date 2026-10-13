@@ -7,7 +7,7 @@ using TicketFlow.Domain.Enums;
 
 namespace TicketFlow.Application.Features.TimeEntries.Commands.AddTimeEntry
 {
-    public sealed class AddTimeEntryCommandHandler : IRequestHandler<AddTimeEntryCommand>
+    public sealed class AddTimeEntryCommandHandler : IRequestHandler<AddTimeEntryCommand, Unit>
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<AddTimeEntryCommandHandler> _logger;
@@ -17,7 +17,7 @@ namespace TicketFlow.Application.Features.TimeEntries.Commands.AddTimeEntry
             _logger = logger;
         }
 
-        public async Task Handle(AddTimeEntryCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(AddTimeEntryCommand request, CancellationToken cancellationToken)
         {
             var ticket = await _unitOfWork.TicketsRepository.GetByIdAsync(request.TicketId, cancellationToken);
             if (ticket == null || ticket.AssignedAgentId != request.AgentId)
@@ -54,6 +54,8 @@ namespace TicketFlow.Application.Features.TimeEntries.Commands.AddTimeEntry
             await _unitOfWork.CompleteAsync(cancellationToken);
 
             _logger.LogInformation("Agent {AgentId} logged {Duration} minutes on ticket {TicketId}.", request.AgentId, request.CreateTimeEntry.DurationMinutes, request.TicketId);
+
+            return Unit.Value;
         }
     }
 }
