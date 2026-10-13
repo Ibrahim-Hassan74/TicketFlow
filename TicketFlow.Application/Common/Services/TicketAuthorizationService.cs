@@ -12,7 +12,7 @@ namespace TicketFlow.Application.Common.Services
         }
         public async Task<bool> CanAccessTicketAsync(Guid ticketId, Guid userId, string role, CancellationToken cancellationToken = default)
         {
-            var ticket = await _unitOfWork.TicketsRepository.GetByIdAsync(ticketId);
+            var ticket = await _unitOfWork.TicketsRepository.GetByIdAsync(ticketId, cancellationToken);
             if (ticket == null)
                 return false;
             return ticket.CanBeAccessedBy(userId, role);

@@ -10,8 +10,9 @@ namespace TicketFlow.Domain.Contracts
             Func<IQueryable<Ticket>, IOrderedQueryable<Ticket>>? orderBy,
             int pageNumber,
             int pageSize,
+            CancellationToken ct = default,
             params Expression<Func<Ticket, object>>[] includes);
 
-        Task<int> CountFilteredTicketsAsync(Expression<Func<Ticket, bool>>? predicate);
+        Task<int> CountFilteredTicketsAsync(Expression<Func<Ticket, bool>>? predicate, CancellationToken ct = default);
     }
 }

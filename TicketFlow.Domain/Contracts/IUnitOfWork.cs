@@ -6,6 +6,6 @@ namespace TicketFlow.Domain.Contracts
         ITicketCommentRepository TicketCommentRepository { get; }
         ITicketsRepository TicketsRepository { get; }
         ITimeEntryRepository TimeEntryRepository { get; }
-        Task<int> CompleteAsync();
+        Task<int> CompleteAsync(CancellationToken ct = default);
     }
 }

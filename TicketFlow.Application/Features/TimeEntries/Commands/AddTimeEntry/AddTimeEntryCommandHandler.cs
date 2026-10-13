@@ -19,7 +19,7 @@ namespace TicketFlow.Application.Features.TimeEntries.Commands.AddTimeEntry
 
         public async Task Handle(AddTimeEntryCommand request, CancellationToken cancellationToken)
         {
-            var ticket = await _unitOfWork.TicketsRepository.GetByIdAsync(request.TicketId);
+            var ticket = await _unitOfWork.TicketsRepository.GetByIdAsync(request.TicketId, cancellationToken);
             if (ticket == null || ticket.AssignedAgentId != request.AgentId)
             {
                 _logger.LogWarning("Agent {AgentId} denied access to add time entry to ticket {TicketId}.", request.AgentId, request.TicketId);
@@ -39,7 +39,7 @@ namespace TicketFlow.Application.Features.TimeEntries.Commands.AddTimeEntry
                 CreatedAt = DateTimeOffset.UtcNow
             };
 
-            await _unitOfWork.TimeEntryRepository.AddAsync(timeEntry);
+            await _unitOfWork.TimeEntryRepository.AddAsync(timeEntry, cancellationToken);
 
             var activity = new TicketActivity
             {
@@ -49,9 +49,9 @@ namespace TicketFlow.Application.Features.TimeEntries.Commands.AddTimeEntry
                 Description = $"Logged {request.CreateTimeEntry.DurationMinutes} minutes of work.",
                 CreatedAt = DateTimeOffset.UtcNow
             };
-            await _unitOfWork.TicketActivityRepository.AddAsync(activity);
+            await _unitOfWork.TicketActivityRepository.AddAsync(activity, cancellationToken);
 
-            await _unitOfWork.CompleteAsync();
+            await _unitOfWork.CompleteAsync(cancellationToken);
 
             _logger.LogInformation("Agent {AgentId} logged {Duration} minutes on ticket {TicketId}.", request.AgentId, request.CreateTimeEntry.DurationMinutes, request.TicketId);
         }

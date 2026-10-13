@@ -39,7 +39,7 @@ namespace TicketFlow.Application.Features.Comments.Commands.AddComment
                 CreatedAt = DateTimeOffset.UtcNow
             };
 
-            await _unitOfWork.TicketCommentRepository.AddAsync(comment);
+            await _unitOfWork.TicketCommentRepository.AddAsync(comment, cancellationToken);
 
             var activity = new TicketActivity
             {
@@ -49,9 +49,9 @@ namespace TicketFlow.Application.Features.Comments.Commands.AddComment
                 Description = "A new comment was added.",
                 CreatedAt = DateTimeOffset.UtcNow
             };
-            await _unitOfWork.TicketActivityRepository.AddAsync(activity);
+            await _unitOfWork.TicketActivityRepository.AddAsync(activity, cancellationToken);
 
-            await _unitOfWork.CompleteAsync();
+            await _unitOfWork.CompleteAsync(cancellationToken);
 
             _logger.LogInformation("User {UserId} added a comment to ticket {TicketId}.", request.UserId, request.TicketId);
 

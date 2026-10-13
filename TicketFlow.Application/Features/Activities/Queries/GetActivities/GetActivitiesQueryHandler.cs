@@ -32,6 +32,7 @@ namespace TicketFlow.Application.Features.Activities.Queries.GetActivities
 
             var activities = await _unitOfWork.TicketActivityRepository.GetFilteredAsync(
                 a => a.TicketId == request.TicketId,
+                cancellationToken
                 a => a.User);
 
             var orderedActivities = activities.OrderBy(a => a.CreatedAt).ToList();

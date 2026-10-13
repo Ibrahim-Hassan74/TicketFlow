@@ -20,7 +20,7 @@ namespace TicketFlow.Application.Features.TimeEntries.Queries.GetTimeEntries
 
         public async Task<TicketTimeEntriesResponse> Handle(GetTimeEntriesQuery request, CancellationToken cancellationToken)
         {
-            var ticket = await _unitOfWork.TicketsRepository.GetByIdAsync(request.TicketId);
+            var ticket = await _unitOfWork.TicketsRepository.GetByIdAsync(request.TicketId, cancellationToken);
             if (ticket == null)
                 throw new NotFoundException("Ticket not found.");
 
@@ -38,6 +38,7 @@ namespace TicketFlow.Application.Features.TimeEntries.Queries.GetTimeEntries
 
             var timeEntries = await _unitOfWork.TimeEntryRepository.GetFilteredAsync(
                 t => t.TicketId == request.TicketId,
+                cancellationToken
                 t => t.Agent);
 
             var orderedEntries = timeEntries.OrderBy(t => t.WorkDate).ThenBy(t => t.CreatedAt).ToList();

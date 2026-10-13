@@ -31,6 +31,7 @@ namespace TicketFlow.Application.Features.Comments.Queries.GetComments
 
             var comments = await _unitOfWork.TicketCommentRepository.GetFilteredAsync(
                 c => c.TicketId == request.TicketId,
+                cancellationToken
                 c => c.User);
 
             var orderedComments = comments.OrderBy(c => c.CreatedAt).ToList();

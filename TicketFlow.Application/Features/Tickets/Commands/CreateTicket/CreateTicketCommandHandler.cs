@@ -39,7 +39,7 @@ namespace TicketFlow.Application.Features.Tickets.Commands.CreateTicket
                 UpdatedAt = DateTimeOffset.UtcNow
             };
 
-            var createdTicket = await _unitOfWork.TicketsRepository.AddAsync(ticket);
+            var createdTicket = await _unitOfWork.TicketsRepository.AddAsync(ticket, cancellationToken);
 
             var activity = new TicketActivity
             {
@@ -49,9 +49,9 @@ namespace TicketFlow.Application.Features.Tickets.Commands.CreateTicket
                 Description = "Ticket created.",
                 CreatedAt = DateTimeOffset.UtcNow
             };
-            await _unitOfWork.TicketActivityRepository.AddAsync(activity);
+            await _unitOfWork.TicketActivityRepository.AddAsync(activity, cancellationToken);
 
-            await _unitOfWork.CompleteAsync();
+            await _unitOfWork.CompleteAsync(cancellationToken);
 
             var response = createdTicket.ToResponse(customer.DisplayName); ;
 
