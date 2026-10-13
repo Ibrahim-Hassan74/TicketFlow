@@ -8,27 +8,27 @@ namespace TicketFlow.Domain.Contracts
         /// Gets all entities of type T from the repository.
         /// </summary>
         /// <returns></returns>
-        Task<IEnumerable<T>> GetAllAsync();
+        Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default);
         /// <summary>
         /// Gets all entities of type T from the repository with specified includes for eager loading.
         /// </summary>
         /// <param name="includes"></param>
         /// <returns></returns>
-        Task<IEnumerable<T>> GetAllAsync(params Expression<Func<T, object>>[] includes);
+        Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default, params Expression<Func<T, object>>[] includes);
         /// <summary>
         /// Gets all entities of type T from the repository that match a condition, with specified includes.
         /// </summary>
         /// <param name="predicate">The condition to filter entities.</param>
         /// <param name="includes">The related entities to include.</param>
         /// <returns></returns>
-        Task<IEnumerable<T>> GetFilteredAsync(Expression<Func<T, bool>> predicate, params Expression<Func<T, object>>[] includes);
+        Task<IEnumerable<T>> GetFilteredAsync(Expression<Func<T, bool>> predicate, CancellationToken ct = default, params Expression<Func<T, object>>[] includes);
         /// <summary>
         /// Gets an entity by its identifier.
         /// </summary>
         /// <typeparam name="T">The type of the entity.</typeparam>
         /// <param name="id">The identifier of the entity.</param>
         /// <returns>The entity if found; otherwise, null.</returns>
-        Task<T?> GetByIdAsync(Guid id);
+        Task<T?> GetByIdAsync(Guid id, CancellationToken ct = default);
         /// <summary>
         /// Gets an entity by its identifier with specified includes for eager loading.
         /// </summary>
@@ -36,29 +36,29 @@ namespace TicketFlow.Domain.Contracts
         /// <param name="id"></param>
         /// <param name="includes"></param>
         /// <returns></returns>
-        Task<T?> GetByIdAsync(Guid id, params Expression<Func<T, object>>[] includes);
+        Task<T?> GetByIdAsync(Guid id, CancellationToken ct = default, params Expression<Func<T, object>>[] includes);
         /// <summary>
         /// Adds a new entity to the repository.
         /// </summary>
         /// <typeparam name="T">The type of the entity.</typeparam>
         /// <param name="entity">The entity to add.</param>
-        Task<T> AddAsync(T entity);
+        Task<T> AddAsync(T entity, CancellationToken ct = default);
         /// <summary>
         /// Updates an existing entity in the repository.
         /// </summary>
         /// <typeparam name="T">The type of the entity.</typeparam>
         /// <param name="entity">The entity to update.</param>
-        Task<T> UpdateAsync(T entity);
+        Task<T> UpdateAsync(T entity, CancellationToken ct = default);
         /// <summary>
         /// Deletes an entity from the repository.
         /// </summary>
         /// <typeparam name="T">The type of the entity.</typeparam>
         /// <param name="id">The identifier of the entity to delete.</param>
-        Task<bool> DeleteAsync(Guid id);
+        Task<bool> DeleteAsync(Guid id, CancellationToken ct = default);
         /// <summary>
         /// count number of row in table
         /// </summary>
         /// <returns>number of row in the table</returns>
-        Task<int> CountAsync();
+        Task<int> CountAsync(CancellationToken ct = default);
     }
 }
