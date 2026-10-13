@@ -4,7 +4,7 @@ using TicketFlow.Domain.IdentityEntities;
 
 namespace TicketFlow.Application.Features.Authentication.Commands.Logout
 {
-    public sealed class LogoutCommandHandler : IRequestHandler<LogoutCommand>
+    public sealed class LogoutCommandHandler : IRequestHandler<LogoutCommand, Unit>
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -15,7 +15,7 @@ namespace TicketFlow.Application.Features.Authentication.Commands.Logout
             _signInManager = signInManager;
         }
 
-        public async Task Handle(LogoutCommand request, CancellationToken cancellationToken)
+        public async Task<Unit> Handle(LogoutCommand request, CancellationToken cancellationToken)
         {
             if (request.Id != Guid.Empty)
             {
@@ -29,6 +29,8 @@ namespace TicketFlow.Application.Features.Authentication.Commands.Logout
             }
 
             await _signInManager.SignOutAsync();
+
+            return Unit.Value;
         }
     }
 }
