@@ -38,7 +38,7 @@ namespace TicketFlow.Application.Features.TimeEntries.Queries.GetTimeEntries
 
             var timeEntries = await _unitOfWork.TimeEntryRepository.GetFilteredAsync(
                 t => t.TicketId == request.TicketId,
-                cancellationToken
+                cancellationToken,
                 t => t.Agent);
 
             var orderedEntries = timeEntries.OrderBy(t => t.WorkDate).ThenBy(t => t.CreatedAt).ToList();
