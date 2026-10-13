@@ -4,7 +4,7 @@ using TicketFlow.Domain.Contracts;
 
 namespace TicketFlow.Application.Features.Tickets.Commands.UpdateTicket
 {
-    public class UpdateTicketStatusCommandHandler : IRequestHandler<UpdateTicketCommand, Unit>
+    public sealed class UpdateTicketStatusCommandHandler : IRequestHandler<UpdateTicketCommand, Unit>
     {
         private readonly IUnitOfWork _unitOfWork;
 
