@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using SupportTicketManagement.Infrastructure.Data;
+using TicketFlow.Infrastructure.Data;
 
 #nullable disable
 
-namespace SupportTicketManagement.Infrastructure.Data.Migrations
+namespace TicketFlow.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     partial class ApplicationDbContextModelSnapshot : ModelSnapshot

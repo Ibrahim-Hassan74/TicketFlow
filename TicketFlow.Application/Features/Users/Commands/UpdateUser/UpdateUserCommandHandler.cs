@@ -35,7 +35,7 @@ namespace TicketFlow.Application.Features.Users.Commands.UpdateUser
             {
                 _logger.LogWarning("Failed to update user {UserId} due to identity errors.", request.Id);
                 var errors = updateResult.Errors.Select(e => e.Description).ToList();
-                throw new RegistrationFailedException("Failed to update user.", errors);
+                throw new IdentityOperationException("Failed to update user.", errors);
             }
 
             var roles = await _userManager.GetRolesAsync(user);

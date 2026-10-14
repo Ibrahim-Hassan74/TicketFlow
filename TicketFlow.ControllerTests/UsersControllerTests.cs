@@ -2,15 +2,15 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using SupportTicketManagement.API.Controllers;
-using SupportTicketManagement.Core.DTO;
-using SupportTicketManagement.Core.Enums;
-using SupportTicketManagement.Core.Helper;
-using SupportTicketManagement.Core.ServiceContracts;
+using TicketFlow.API.Controllers;
+using TicketFlow.Core.DTO;
+using TicketFlow.Core.Enums;
+using TicketFlow.Core.Helper;
+using TicketFlow.Core.ServiceContracts;
 using System.Security.Claims;
 using Xunit;
 
-namespace SupportTicketManagement.ControllerTests
+namespace TicketFlow.ControllerTests
 {
     public class UsersControllerTests
     {

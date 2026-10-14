@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace SupportTicketManagement.Core.Helper
+namespace TicketFlow.Core.Helper
 {
     public class ValidationHelper
     {

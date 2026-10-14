@@ -1,8 +1,8 @@
-﻿using SupportTicketManagement.Core.Domain.IdentityEntities;
-using SupportTicketManagement.Core.DTO;
+﻿using TicketFlow.Core.Domain.IdentityEntities;
+using TicketFlow.Core.DTO;
 using System.Security.Claims;
 
-namespace SupportTicketManagement.Core.ServiceContracts
+namespace TicketFlow.Core.ServiceContracts
 {
     /// <summary>
     /// JWT Service Interface

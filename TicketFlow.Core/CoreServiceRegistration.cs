@@ -3,15 +3,15 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using SupportTicketManagement.Core.Enums;
-using SupportTicketManagement.Core.Helper;
-using SupportTicketManagement.Core.ServiceContracts;
-using SupportTicketManagement.Core.Services;
+using TicketFlow.Core.Enums;
+using TicketFlow.Core.Helper;
+using TicketFlow.Core.ServiceContracts;
+using TicketFlow.Core.Services;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 
-namespace SupportTicketManagement.Core
+namespace TicketFlow.Core
 {
     public static class CoreServiceRegistration
     {

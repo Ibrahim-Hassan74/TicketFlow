@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace SupportTicketManagement.Core.DTO
+namespace TicketFlow.Core.DTO
 {
     public class AssignTicketRequest
     {

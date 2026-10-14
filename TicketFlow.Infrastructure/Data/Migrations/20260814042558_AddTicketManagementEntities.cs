@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace SupportTicketManagement.Infrastructure.Data.Migrations
+namespace TicketFlow.Infrastructure.Data.Migrations
 {
     /// <inheritdoc />
     public partial class AddTicketManagementEntities : Migration

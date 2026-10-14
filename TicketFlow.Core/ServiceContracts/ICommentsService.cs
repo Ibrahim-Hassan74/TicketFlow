@@ -1,6 +1,6 @@
-using SupportTicketManagement.Core.DTO;
+using TicketFlow.Core.DTO;
 
-namespace SupportTicketManagement.Core.ServiceContracts
+namespace TicketFlow.Core.ServiceContracts
 {
     public interface ICommentsService
     {

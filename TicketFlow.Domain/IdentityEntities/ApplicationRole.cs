@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
-namespace TicketFlow.Domain.Domain.IdentityEntities
+namespace TicketFlow.Domain.IdentityEntities
 {
     public class ApplicationRole : IdentityRole<Guid>
     {

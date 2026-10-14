@@ -1,6 +1,6 @@
-using SupportTicketManagement.Core.Domain.IdentityEntities;
+using TicketFlow.Core.Domain.IdentityEntities;
 
-namespace SupportTicketManagement.Core.Domain.Entities
+namespace TicketFlow.Core.Domain.Entities
 {
     public class TicketComment
     {

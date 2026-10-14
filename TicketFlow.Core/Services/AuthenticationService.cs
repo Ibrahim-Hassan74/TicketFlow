@@ -3,14 +3,14 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
-using SupportTicketManagement.Core.Domain.IdentityEntities;
-using SupportTicketManagement.Core.DTO;
-using SupportTicketManagement.Core.Enums;
-using SupportTicketManagement.Core.Helper;
-using SupportTicketManagement.Core.ServiceContracts;
+using TicketFlow.Core.Domain.IdentityEntities;
+using TicketFlow.Core.DTO;
+using TicketFlow.Core.Enums;
+using TicketFlow.Core.Helper;
+using TicketFlow.Core.ServiceContracts;
 using System.Security.Claims;
 
-namespace SupportTicketManagement.Core.Services
+namespace TicketFlow.Core.Services
 {
     public class AuthenticationService : IAuthenticationService
     {

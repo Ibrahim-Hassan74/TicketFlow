@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace SupportTicketManagement.Infrastructure.Data.Migrations
+namespace TicketFlow.Infrastructure.Data.Migrations
 {
     /// <inheritdoc />
     public partial class RemoveEnumDatabaseDefaults : Migration

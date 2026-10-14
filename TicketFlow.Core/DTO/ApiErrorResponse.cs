@@ -1,4 +1,4 @@
-﻿namespace SupportTicketManagement.Core.DTO
+﻿namespace TicketFlow.Core.DTO
 {
     /// <summary>
     /// Represents a standardized error response for the API.

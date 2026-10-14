@@ -1,12 +1,12 @@
 using FluentAssertions;
 using Moq;
 using Microsoft.Extensions.Logging;
-using SupportTicketManagement.Core.DTO;
-using SupportTicketManagement.Core.RepositoryContracts;
-using SupportTicketManagement.Core.Services;
+using TicketFlow.Core.DTO;
+using TicketFlow.Core.RepositoryContracts;
+using TicketFlow.Core.Services;
 using Xunit;
 
-namespace SupportTicketManagement.ServiceTests
+namespace TicketFlow.ServiceTests
 {
     public class DashboardServiceTests
     {

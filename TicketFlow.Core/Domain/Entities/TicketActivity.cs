@@ -1,7 +1,7 @@
-using SupportTicketManagement.Core.Domain.IdentityEntities;
-using SupportTicketManagement.Core.Enums;
+using TicketFlow.Core.Domain.IdentityEntities;
+using TicketFlow.Core.Enums;
 
-namespace SupportTicketManagement.Core.Domain.Entities
+namespace TicketFlow.Core.Domain.Entities
 {
     public class TicketActivity
     {

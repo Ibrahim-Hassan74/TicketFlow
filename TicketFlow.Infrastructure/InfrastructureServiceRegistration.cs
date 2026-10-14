@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using SupportTicketManagement.Core.RepositoryContracts;
-using SupportTicketManagement.Infrastructure.Repository;
+using TicketFlow.Core.RepositoryContracts;
+using TicketFlow.Infrastructure.Repository;
 
-namespace SupportTicketManagement.Infrastructure
+namespace TicketFlow.Infrastructure
 {
     public static class InfrastructureServiceRegistration
     {

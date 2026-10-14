@@ -1,7 +1,7 @@
-using SupportTicketManagement.Core.RepositoryContracts;
-using SupportTicketManagement.Infrastructure.Data;
+using TicketFlow.Core.RepositoryContracts;
+using TicketFlow.Infrastructure.Data;
 
-namespace SupportTicketManagement.Infrastructure.Repository
+namespace TicketFlow.Infrastructure.Repository
 {
     public class UnitOfWork : IUnitOfWork
     {

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
-using SupportTicketManagement.Core.Domain.Entities;
+using TicketFlow.Core.Domain.Entities;
 
-namespace SupportTicketManagement.Core.Domain.IdentityEntities
+namespace TicketFlow.Core.Domain.IdentityEntities
 {
     public class ApplicationUser : IdentityUser<Guid>
     {
