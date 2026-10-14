@@ -14,10 +14,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\Tickets\Queries\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\TicketFlow.Domain\TicketFlow.Domain.csproj" />
   </ItemGroup>
 
