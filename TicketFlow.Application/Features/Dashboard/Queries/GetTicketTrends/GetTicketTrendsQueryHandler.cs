@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.Extensions.Logging;
 using TicketFlow.Application.Common.Exceptions;
 using TicketFlow.Application.Common.Interfaces;
@@ -25,9 +25,6 @@ namespace TicketFlow.Application.Features.Dashboard.Queries.GetTicketTrends
                 _logger.LogWarning("Forbidden access attempt to Ticket Trends by role {Role}.", request.Role);
                 throw new ForbiddenException("Only administrators can access dashboard metrics.");
             }
-
-            if (request.Days <= 0 || request.Days > 365)
-                throw new BadRequestException("Days parameter must be between 1 and 365.");
 
             var trends = await _dashboardRepository.GetTicketTrendsAsync(request.Days);
             return trends;
