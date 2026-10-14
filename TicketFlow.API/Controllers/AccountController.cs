@@ -1,12 +1,17 @@
-﻿using Asp.Versioning;
-using Microsoft.AspNetCore.Authorization;
+﻿using MediatR;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
-using SupportTicketManagement.Core.DTO;
-using SupportTicketManagement.Core.Helper;
-using SupportTicketManagement.Core.ServiceContracts;
-using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using TicketFlow.Application.Common.Interfaces;
+using TicketFlow.Application.Features.Users.DTOs;
+using TicketFlow.Application.Features.Authentication.DTOs;
+using TicketFlow.Application.Features.Users.Queries.GetUserById;
+using TicketFlow.Application.Features.Authentication.Commands.Login;
+using TicketFlow.Application.Features.Authentication.Commands.Logout;
+using TicketFlow.Application.Features.Authentication.Commands.RefreshToken;
+using TicketFlow.Application.Features.Authentication.Commands.Register;
 
-namespace SupportTicketManagement.API.Controllers
+namespace TicketFlow.API.Controllers
 {
     /// <summary>
     /// Controller responsible for handling user authentication-related actions
@@ -15,17 +20,17 @@ namespace SupportTicketManagement.API.Controllers
     [ApiVersion(1.0)]
     public class AccountController : CustomControllerBase
     {
-        private readonly IAuthenticationService _authService;
+        private readonly ICurrentUserService _currentUserService;
 
-        public AccountController(IAuthenticationService authService)
+        public AccountController(IMediator mediator, ICurrentUserService currentUserService) : base(mediator)
         {
-            _authService = authService;
+            _currentUserService = currentUserService;
         }
 
         /// <summary>
         /// Registers a new user in the system.
         /// </summary>
-        /// <param name="registerDTO">
+        /// <param name="command">
         /// An object containing user registration details like username, email, and password.
         /// </param>
         /// <returns>
@@ -45,26 +50,27 @@ namespace SupportTicketManagement.API.Controllers
         /// </response>
         [HttpPost("register")]
         [Authorize("NotAuthorized")]
-        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(RegisterCommand), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status409Conflict)]
-        public async Task<IActionResult> PostRegister([FromBody] RegisterDTO registerDTO)
+        public async Task<IActionResult> PostRegister([FromBody] RegisterCommand command)
         {
-            var response = await _authService.RegisterAsync(registerDTO);
-            return StatusCode(response.StatusCode, response);
+            var response = await _mediator.Send(command);
+
+            return Ok(response);
         }
 
         /// <summary>
         /// Authenticates an existing user and generates a JWT token.
         /// </summary>
-        /// <param name="loginDTO">
+        /// <param name="command">
         /// The user's login credentials (email and password).
         /// </param>
         /// <returns>
         /// Returns a response based on the login outcome.
         /// </returns>
         /// <response code="200">
-        /// Login succeeded. Returns <see cref="ApiSuccessResponse"/> with a JWT token and refresh token.
+        /// Login succeeded. Returns <see cref="AuthenticationResponse"/> with a JWT token and refresh token.
         /// </response>
         /// <response code="400">
         /// Bad Request – Input invalid. Examples include:
@@ -88,29 +94,29 @@ namespace SupportTicketManagement.API.Controllers
         /// </response>
         [HttpPost("login")]
         [Authorize("NotAuthorized")]
-        [ProducesResponseType(typeof(ApiSuccessResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(AuthenticationResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status423Locked)]
-        public async Task<IActionResult> PostLogin([FromBody] LoginDTO loginDTO)
+        public async Task<IActionResult> PostLogin([FromBody] LoginCommand command)
         {
-            var response = await _authService.LoginAsync(loginDTO);
-            return StatusCode(response.StatusCode, response);
+            var response = await _mediator.Send(command);
+            return Ok(response);
         }
 
         /// <summary>
         /// Generates a new access token (and refresh token) using a valid refresh token.
         /// </summary>
-        /// <param name="model">
+        /// <param name="command">
         /// Contains the expired access token and its corresponding refresh token.
         /// </param>
         /// <returns>
         /// Returns a response indicating whether the token refresh succeeded.
         /// </returns>
         /// <response code="200">
-        /// Token refreshed successfully. Returns <see cref="ApiSuccessResponse"/> containing the new JWT and refresh token.
+        /// Token refreshed successfully. Returns <see cref="AuthenticationResponse"/> containing the new JWT and refresh token.
         /// </response>
         /// <response code="400">
         /// Bad Request – Input is invalid, missing, or the refresh token is expired/does not match the user. Returns <see cref="ApiErrorResponse"/>.
@@ -119,13 +125,13 @@ namespace SupportTicketManagement.API.Controllers
         /// Not Found – User associated with the token does not exist. Returns <see cref="ApiErrorResponse"/>.
         /// </response>
         [HttpPost("generate-new-jwt-token")]
-        [ProducesResponseType(typeof(ApiSuccessResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(AuthenticationResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> RefreshToken([FromBody] TokenModel model)
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenCommand command)
         {
-            var response = await _authService.RefreshTokenAsync(model);
-            return StatusCode(response.StatusCode, response);
+            var response = await _mediator.Send(command);
+            return Ok(response);
         }
 
         /// <summary>
@@ -146,13 +152,17 @@ namespace SupportTicketManagement.API.Controllers
         /// </response>
         [HttpPost("logout")]
         [Authorize]
-        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> PostLogout()
         {
-            var email = User.FindFirst(ClaimTypes.Email)?.Value;
-            var response = await _authService.LogoutAsync(email);
-            return StatusCode(response.StatusCode, response);
+            var Id = _currentUserService.UserId;
+
+            var command = new LogoutCommand() { Id = Id };
+
+            var response = await _mediator.Send(command);
+
+            return Ok();
         }
 
         /// <summary>
@@ -185,17 +195,13 @@ namespace SupportTicketManagement.API.Controllers
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GetCurrentUser()
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-                return BadRequest(ApiResponseFactory.BadRequest("User ID not found."));
+            var userId = _currentUserService.UserId;
 
-            var userResponse = await _authService.GetUserByIdAsync(userId);
-            if (!userResponse.Success)
-                return ToActionResult(userResponse);
+            var command = new GetUserByIdQuery() { Id = userId };
 
-            var user = userResponse as ApiResponseWithData<UserResponse>;
+            var response = await _mediator.Send(command);
 
-            return Ok(user?.Data);
+            return Ok(response);
         }
     }
 }

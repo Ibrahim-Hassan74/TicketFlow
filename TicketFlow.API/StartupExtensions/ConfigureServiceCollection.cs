@@ -1,14 +1,13 @@
 using Asp.Versioning;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Localization;
 using Microsoft.OpenApi;
-using SupportTicketManagement.Core.Domain.IdentityEntities;
+using Microsoft.AspNetCore.Mvc;
+using System.Threading.RateLimiting;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using SupportTicketManagement.Core.Helper;
 using SupportTicketManagement.Infrastructure.Data;
-using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using SupportTicketManagement.Core.Domain.IdentityEntities;
 
 namespace SupportTicketManagement.API.StartupExtensions
 {

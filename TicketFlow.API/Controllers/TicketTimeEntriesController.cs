@@ -1,12 +1,14 @@
+using MediatR;
 using Asp.Versioning;
-using Microsoft.AspNetCore.Authorization;
+using TicketFlow.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
-using SupportTicketManagement.Core.DTO;
-using SupportTicketManagement.Core.Enums;
-using SupportTicketManagement.Core.ServiceContracts;
-using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using TicketFlow.Application.Common.Interfaces;
+using TicketFlow.Application.Features.TimeEntries.DTOs;
+using TicketFlow.Application.Features.TimeEntries.Commands.AddTimeEntry;
+using TicketFlow.Application.Features.TimeEntries.Queries.GetTimeEntries;
 
-namespace SupportTicketManagement.API.Controllers
+namespace TicketFlow.API.Controllers
 {
     /// <summary>
     /// Controller responsible for managing time entries on a specific support ticket.
@@ -16,22 +18,11 @@ namespace SupportTicketManagement.API.Controllers
     [Route("api/v{version:apiVersion}/tickets/{ticketId:guid}/time-entries")]
     public class TicketTimeEntriesController : CustomControllerBase
     {
-        private readonly ITimeEntriesService _timeEntriesService;
+        private readonly ICurrentUserService _currentUserService;
 
-        public TicketTimeEntriesController(ITimeEntriesService timeEntriesService)
+        public TicketTimeEntriesController(IMediator mediator, ICurrentUserService currentUserService) : base(mediator)
         {
-            _timeEntriesService = timeEntriesService;
-        }
-
-        private Guid GetUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
-        }
-
-        private string GetUserRole()
-        {
-            return User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
+            _currentUserService = currentUserService;
         }
 
         /// <summary>
@@ -49,13 +40,16 @@ namespace SupportTicketManagement.API.Controllers
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetTimeEntries(Guid ticketId)
         {
-            var response = await _timeEntriesService.GetTimeEntriesAsync(ticketId, GetUserId(), GetUserRole());
-            
-            if (!response.Success)
-                return ToActionResult(response);
+            var query = new GetTimeEntriesQuery()
+            {
+                TicketId = ticketId,
+                UserId = _currentUserService.UserId,
+                Role = _currentUserService.Role
+            };
 
-            var responseData = response as ApiResponseWithData<TicketTimeEntriesResponse>;
-            return Ok(responseData?.Data);
+            var response = await _mediator.Send(query);
+
+            return Ok(response);
         }
 
         /// <summary>
@@ -67,15 +61,23 @@ namespace SupportTicketManagement.API.Controllers
         /// <returns>A success response if the time entry is added.</returns>
         [HttpPost]
         [Authorize(Roles = nameof(UserRole.SupportAgent))]
-        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> AddTimeEntry(Guid ticketId, [FromBody] CreateTimeEntryRequest request)
         {
-            var response = await _timeEntriesService.AddTimeEntryAsync(ticketId, request, GetUserId());
-            return ToActionResult(response);
+            var command = new AddTimeEntryCommand()
+            {
+                TicketId = ticketId,
+                AgentId = _currentUserService.UserId,
+                CreateTimeEntry = request
+            };
+
+            await _mediator.Send(command);
+
+            return Ok();
         }
     }
 }

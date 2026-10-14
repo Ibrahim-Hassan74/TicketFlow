@@ -1,12 +1,20 @@
+using MediatR;
 using Asp.Versioning;
-using Microsoft.AspNetCore.Authorization;
+using TicketFlow.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
-using SupportTicketManagement.Core.DTO;
-using SupportTicketManagement.Core.Enums;
-using SupportTicketManagement.Core.ServiceContracts;
-using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using TicketFlow.Application.Common.Models;
+using TicketFlow.Application.Common.Interfaces;
+using TicketFlow.Application.Features.Tickets.DTOs;
+using TicketFlow.Application.Features.Tickets.Queries.GetTickets;
+using TicketFlow.Application.Features.Tickets.Commands.AssignAgent;
+using TicketFlow.Application.Features.Tickets.Queries.GetTicketById;
+using TicketFlow.Application.Features.Tickets.Commands.UpdateTicket;
+using TicketFlow.Application.Features.Tickets.Commands.CreateTicket;
+using TicketFlow.Application.Features.Tickets.Commands.UpdateTicketStatus;
+using TicketFlow.Application.Features.Tickets.Commands.UpdateTicketPriority;
 
-namespace SupportTicketManagement.API.Controllers
+namespace TicketFlow.API.Controllers
 {
     /// <summary>
     /// Controller responsible for managing support tickets.
@@ -16,21 +24,12 @@ namespace SupportTicketManagement.API.Controllers
     [ApiVersion(1.0)]
     public class TicketsController : CustomControllerBase
     {
-        private readonly ITicketsService _ticketsService;
+        private readonly ICurrentUserService _currentUserService;
 
-        public TicketsController(ITicketsService ticketsService)
+        public TicketsController(IMediator mediator, ICurrentUserService currentUserService) : base(mediator)
         {
-            _ticketsService = ticketsService;
+            _currentUserService = currentUserService;
         }
-
-        private Guid GetUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
-        }
-
-        private bool IsAdmin() => User.IsInRole(UserRole.Admin.ToString());
-        private bool IsSupportAgent() => User.IsInRole(UserRole.SupportAgent.ToString());
 
         /// <summary>
         /// Retrieves a paginated list of tickets.
@@ -46,27 +45,21 @@ namespace SupportTicketManagement.API.Controllers
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GetTickets([FromQuery] TicketQueryRequest request)
         {
-            ApiResponse response;
-            var userId = GetUserId();
-
-            if (IsAdmin())
+            var query = new GetTicketsQuery
             {
-                response = await _ticketsService.GetTicketsForAdminAsync(request);
-            }
-            else if (IsSupportAgent())
-            {
-                response = await _ticketsService.GetTicketsForAgentAsync(request, userId);
-            }
-            else
-            {
-                response = await _ticketsService.GetTicketsForCustomerAsync(request, userId);
-            }
+                Status = request.Status,
+                Priority = request.Priority,
+                Search = request.Search,
+                SortBy = request.SortBy,
+                SortOrder = request.SortOrder,
+                Page = request.Page,
+                PageSize = request.PageSize,
+                UserId = _currentUserService.UserId,
+                Role = _currentUserService.Role
+            };
 
-            if (!response.Success)
-                return ToActionResult(response);
-
-            var responseData = response as ApiResponseWithData<PaginatedResponse<TicketResponse>>;
-            return Ok(responseData?.Data);
+            var response = await _mediator.Send(query);
+            return Ok(response);
         }
 
         /// <summary>
@@ -82,27 +75,11 @@ namespace SupportTicketManagement.API.Controllers
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetTicketById(Guid id)
         {
-            ApiResponse response;
-            var userId = GetUserId();
+            var query = new GetTicketByIdQuery(id, _currentUserService.UserId, _currentUserService.Role);
 
-            if (IsAdmin())
-            {
-                response = await _ticketsService.GetTicketByIdForAdminAsync(id);
-            }
-            else if (IsSupportAgent())
-            {
-                response = await _ticketsService.GetTicketByIdForAgentAsync(id, userId);
-            }
-            else
-            {
-                response = await _ticketsService.GetTicketByIdForCustomerAsync(id, userId);
-            }
+            var response = await _mediator.Send(query);
 
-            if (!response.Success)
-                return ToActionResult(response);
-
-            var responseData = response as ApiResponseWithData<TicketResponse>;
-            return Ok(responseData?.Data);
+            return Ok(response);
         }
 
         /// <summary>
@@ -119,14 +96,15 @@ namespace SupportTicketManagement.API.Controllers
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> CreateTicket([FromBody] CreateTicketRequest request)
         {
-            var userId = GetUserId();
-            var response = await _ticketsService.CreateTicketAsync(request, userId);
+            var command = new CreateTicketCommand()
+            {
+                CustomerId = _currentUserService.UserId,
+                CreateTicket = request
+            };
 
-            if (!response.Success)
-                return ToActionResult(response);
+            var response = await _mediator.Send(command);
 
-            var responseData = response as ApiResponseWithData<TicketResponse>;
-            return Ok(responseData?.Data);
+            return Ok(response);
         }
 
         /// <summary>
@@ -138,16 +116,23 @@ namespace SupportTicketManagement.API.Controllers
         /// <returns>Success response.</returns>
         [HttpPut("{id:guid}")]
         [Authorize(Roles = nameof(UserRole.Admin))]
-        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateTicket(Guid id, [FromBody] UpdateTicketRequest request)
         {
-            var userId = GetUserId();
-            var response = await _ticketsService.UpdateTicketAsync(id, request, userId);
-            return ToActionResult(response);
+            var command = new UpdateTicketCommand()
+            {
+                UpdateTicket = request,
+                Id = id,
+                UserId = _currentUserService.UserId
+            };
+
+            var response = await _mediator.Send(command);
+
+            return Ok(response);
         }
 
         /// <summary>
@@ -162,29 +147,23 @@ namespace SupportTicketManagement.API.Controllers
         /// <returns>Success response.</returns>
         [Authorize]
         [HttpPatch("{id:guid}/status")]
-        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateTicketStatus(Guid id, [FromBody] UpdateTicketStatusRequest request)
         {
-            ApiResponse response;
-            var userId = GetUserId();
+            var command = new UpdateTicketStatusCommand()
+            {
+                TicketId = id,
+                NewStatus = request.Status,
+                UserId = _currentUserService.UserId,
+                Role = _currentUserService.Role
+            };
 
-            if (IsAdmin())
-            {
-                response = await _ticketsService.UpdateTicketStatusByAdminAsync(id, request, userId);
-            }
-            else if (IsSupportAgent())
-            {
-                response = await _ticketsService.UpdateTicketStatusByAgentAsync(id, request, userId);
-            }
-            else
-            {
-                response = await _ticketsService.UpdateTicketStatusByCustomerAsync(id, request, userId);
-            }
+            await _mediator.Send(command);
 
-            return ToActionResult(response);
+            return Ok();
         }
 
         /// <summary>
@@ -196,16 +175,23 @@ namespace SupportTicketManagement.API.Controllers
         /// <returns>Success response.</returns>
         [HttpPatch("{id:guid}/priority")]
         [Authorize(Roles = nameof(UserRole.Admin))]
-        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateTicketPriority(Guid id, [FromBody] UpdateTicketPriorityRequest request)
         {
-            var userId = GetUserId();
-            var response = await _ticketsService.UpdateTicketPriorityAsync(id, request, userId);
-            return ToActionResult(response);
+            var command = new UpdateTicketPriorityCommand()
+            {
+                TicketId = id,
+                NewPriority = request.Priority,
+                UserId = _currentUserService.UserId
+            };
+
+            await _mediator.Send(command);
+
+            return Ok();
         }
 
         /// <summary>
@@ -217,16 +203,23 @@ namespace SupportTicketManagement.API.Controllers
         /// <returns>Success response.</returns>
         [HttpPatch("{id:guid}/assign")]
         [Authorize(Roles = nameof(UserRole.Admin))]
-        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> AssignAgent(Guid id, [FromBody] AssignTicketRequest request)
         {
-            var userId = GetUserId();
-            var response = await _ticketsService.AssignAgentAsync(id, request, userId);
-            return ToActionResult(response);
+            var command = new AssignAgentCommand()
+            {
+                TicketId = id,
+                AgentId = request.AgentId,
+                UserId = _currentUserService.UserId
+            };
+
+            await _mediator.Send(command);
+
+            return Ok();
         }
     }
 }

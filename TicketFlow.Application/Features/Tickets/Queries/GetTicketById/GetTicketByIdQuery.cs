@@ -1,6 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using MediatR;
+using TicketFlow.Application.Features.Tickets.DTOs;
 
 namespace TicketFlow.Application.Features.Tickets.Queries.GetTicketById
 {
