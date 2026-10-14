@@ -1,12 +1,15 @@
-﻿using Asp.Versioning;
-using Microsoft.AspNetCore.Authorization;
+﻿using MediatR;
+using Asp.Versioning;
+using TicketFlow.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
-using SupportTicketManagement.Core.DTO;
-using SupportTicketManagement.Core.Enums;
-using SupportTicketManagement.Core.ServiceContracts;
-using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using TicketFlow.Application.Common.Models;
+using TicketFlow.Application.Common.Interfaces;
+using TicketFlow.Application.Features.Dashboard.Queries.GetStats;
+using TicketFlow.Application.Features.Dashboard.Queries.GetTicketTrends;
+using TicketFlow.Application.Features.Dashboard.Queries.GetAgentWorkload;
 
-namespace SupportTicketManagement.API.Controllers
+namespace TicketFlow.API.Controllers
 {
     /// <summary>
     /// Controller responsible for retrieving system-wide dashboard metrics.
@@ -17,16 +20,10 @@ namespace SupportTicketManagement.API.Controllers
     [Authorize(Roles = nameof(UserRole.Admin))]
     public class DashboardController : CustomControllerBase
     {
-        private readonly IDashboardService _dashboardService;
-
-        public DashboardController(IDashboardService dashboardService)
+        private readonly ICurrentUserService _currentUserService;
+        public DashboardController(IMediator mediator, ICurrentUserService currentUserService) : base(mediator)
         {
-            _dashboardService = dashboardService;
-        }
-
-        private string GetUserRole()
-        {
-            return User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
+            _currentUserService = currentUserService;
         }
 
         /// <summary>
@@ -39,12 +36,13 @@ namespace SupportTicketManagement.API.Controllers
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> GetStats()
         {
-            var response = await _dashboardService.GetStatsAsync(GetUserRole());
-            if (!response.Success)
-                return ToActionResult(response);
+            var role = _currentUserService.Role;
 
-            var responseData = response as ApiResponseWithData<DashboardStatsResponse>;
-            return Ok(responseData?.Data);
+            var query = new GetStatsQuery() { Role = role };
+
+            var response = await _mediator.Send(query);
+
+            return Ok(response);
         }
 
         /// <summary>
@@ -57,12 +55,13 @@ namespace SupportTicketManagement.API.Controllers
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> GetAgentWorkload()
         {
-            var response = await _dashboardService.GetAgentWorkloadAsync(GetUserRole());
-            if (!response.Success)
-                return ToActionResult(response);
+            var role = _currentUserService.Role;
 
-            var responseData = response as ApiResponseWithData<IEnumerable<AgentWorkloadResponse>>;
-            return Ok(responseData?.Data);
+            var query = new GetAgentWorkloadQuery() { Role = role };
+
+            var response = await _mediator.Send(query);
+
+            return Ok(response);
         }
 
         /// <summary>
@@ -77,12 +76,13 @@ namespace SupportTicketManagement.API.Controllers
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> GetTicketTrends([FromQuery] int days = 30)
         {
-            var response = await _dashboardService.GetTicketTrendsAsync(days, GetUserRole());
-            if (!response.Success)
-                return ToActionResult(response);
+            var role = _currentUserService.Role;
 
-            var responseData = response as ApiResponseWithData<IEnumerable<TicketTrendResponse>>;
-            return Ok(responseData?.Data);
+            var query = new GetTicketTrendsQuery() { Role = role, Days = days };
+
+            var response = await _mediator.Send(query);
+
+            return Ok(response);
         }
     }
 }

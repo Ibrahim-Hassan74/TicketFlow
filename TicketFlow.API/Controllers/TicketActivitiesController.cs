@@ -1,11 +1,12 @@
+using MediatR;
 using Asp.Versioning;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SupportTicketManagement.Core.DTO;
-using SupportTicketManagement.Core.ServiceContracts;
-using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using TicketFlow.Application.Common.Interfaces;
+using TicketFlow.Application.Features.Activities.DTOs;
+using TicketFlow.Application.Features.Activities.Queries.GetActivities;
 
-namespace SupportTicketManagement.API.Controllers
+namespace TicketFlow.API.Controllers
 {
     /// <summary>
     /// Controller responsible for retrieving the activity timeline (audit trail) for a specific ticket.
@@ -15,22 +16,11 @@ namespace SupportTicketManagement.API.Controllers
     [Authorize]
     public class TicketActivitiesController : CustomControllerBase
     {
-        private readonly IActivitiesService _activitiesService;
+        private readonly ICurrentUserService _currentUserService;
 
-        public TicketActivitiesController(IActivitiesService activitiesService)
+        public TicketActivitiesController(IMediator mediator, ICurrentUserService currentUserService) : base(mediator)
         {
-            _activitiesService = activitiesService;
-        }
-
-        private Guid GetUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
-        }
-
-        private string GetUserRole()
-        {
-            return User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
+            _currentUserService = currentUserService;
         }
 
         /// <summary>
@@ -45,13 +35,11 @@ namespace SupportTicketManagement.API.Controllers
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetActivities(Guid ticketId)
         {
-            var response = await _activitiesService.GetActivitiesAsync(ticketId, GetUserId(), GetUserRole());
-            
-            if (!response.Success)
-                return ToActionResult(response);
+            var query = new GetActivitiesQuery() { TicketId = ticketId, Role = _currentUserService.Role, UserId = _currentUserService.UserId };
 
-            var responseData = response as ApiResponseWithData<List<ActivityResponse>>;
-            return Ok(responseData?.Data);
+            var response = await _mediator.Send(query);
+
+            return Ok(response);
         }
     }
 }

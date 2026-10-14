@@ -1,11 +1,17 @@
+using MediatR;
 using Asp.Versioning;
-using Microsoft.AspNetCore.Authorization;
+using TicketFlow.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
-using SupportTicketManagement.Core.DTO;
-using SupportTicketManagement.Core.Enums;
-using SupportTicketManagement.Core.ServiceContracts;
+using Microsoft.AspNetCore.Authorization;
+using TicketFlow.Application.Common.Models;
+using TicketFlow.Application.Features.Users.DTOs;
+using TicketFlow.Application.Features.Users.Queries.GetUsers;
+using TicketFlow.Application.Features.Users.Queries.GetAgents;
+using TicketFlow.Application.Features.Users.Commands.CreateUser;
+using TicketFlow.Application.Features.Users.Commands.UpdateUser;
+using TicketFlow.Application.Features.Users.Queries.GetUserById;
 
-namespace SupportTicketManagement.API.Controllers
+namespace TicketFlow.API.Controllers
 {
     /// <summary>
     /// Controller responsible for managing users in the Support Ticket Management system.
@@ -16,17 +22,15 @@ namespace SupportTicketManagement.API.Controllers
     [Authorize(Roles = nameof(UserRole.Admin))]
     public class UsersController : CustomControllerBase
     {
-        private readonly IUsersService _usersService;
 
-        public UsersController(IUsersService usersService)
+        public UsersController(IMediator mediator) : base(mediator)
         {
-            _usersService = usersService;
         }
 
         /// <summary>
         /// Retrieves a paginated list of users based on the specified query parameters.
         /// </summary>
-        /// <param name="request">
+        /// <param name="query">
         /// The query parameters for filtering, sorting, and paginating the user list.
         /// </param>
         /// <returns>
@@ -49,15 +53,10 @@ namespace SupportTicketManagement.API.Controllers
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> GetUsers([FromQuery] UserQueryRequest request)
+        public async Task<IActionResult> GetUsers([FromQuery] GetUsersQuery query)
         {
-            var response = await _usersService.GetUsersAsync(request);
-
-            if(!response.Success)
-                ToActionResult(response);
-            var responseData = response as ApiResponseWithData<PaginatedResponse<UserResponse>>;
-
-            return Ok(responseData?.Data);
+            var response = await _mediator.Send(query);
+            return Ok(response);
         }
 
         /// <summary>
@@ -88,20 +87,20 @@ namespace SupportTicketManagement.API.Controllers
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetUserById(Guid id)
         {
-            var response = await _usersService.GetUserByIdAsync(id);
+            var query = new GetUserByIdQuery()
+            {
+                Id = id
+            };
 
-            if(!response.Success)
-                ToActionResult(response);
+            var response = await _mediator.Send(query);
 
-            var responseData = response as ApiResponseWithData<UserResponse>;
-
-            return Ok(responseData?.Data);
+            return Ok(response);
         }
 
         /// <summary>
         /// Creates a new user account in the system.
         /// </summary>
-        /// <param name="request">
+        /// <param name="command">
         /// The details of the user to create, including their role and contact information.
         /// </param>
         /// <returns>
@@ -128,16 +127,11 @@ namespace SupportTicketManagement.API.Controllers
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status409Conflict)]
-        public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request)
+        public async Task<IActionResult> CreateUser([FromBody] CreateUserCommand command)
         {
-            var response = await _usersService.CreateUserAsync(request);
+            var response = await _mediator.Send(command);
 
-            if(!response.Success)
-                return ToActionResult(response);
-
-            var responseData = response as ApiResponseWithData<UserResponse>;
-
-            return Ok(responseData?.Data);
+            return Ok(response);
         }
 
         /// <summary>
@@ -175,14 +169,15 @@ namespace SupportTicketManagement.API.Controllers
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserRequest request)
         {
-            var response = await _usersService.UpdateUserAsync(id, request);
+            var command = new UpdateUserCommand()
+            {
+                Id = id,
+                UpdateUser = request
+            };
 
-            if(!response.Success)
-                return ToActionResult(response);
+            var response = await _mediator.Send(command);
 
-            var responseData = response as ApiResponseWithData<UserResponse>;
-
-            return Ok(responseData?.Data);
+            return Ok(response);
         }
 
         /// <summary>
@@ -216,14 +211,15 @@ namespace SupportTicketManagement.API.Controllers
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> GetAgents([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            var response = await _usersService.GetAgentsAsync(pageNumber, pageSize);
+            var query = new GetAgentsQuery()
+            {
+                Page = pageNumber,
+                PageSize = pageSize
+            };
 
-            if(!response.Success)
-                return ToActionResult(response);
+            var response = await _mediator.Send(query);
 
-            var responseData = response as ApiResponseWithData<PaginatedResponse<UserResponse>>;
-
-            return Ok(responseData?.Data);
+            return Ok(response);
         }
     }
 }

@@ -1,11 +1,13 @@
+using MediatR;
 using Asp.Versioning;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SupportTicketManagement.Core.DTO;
-using SupportTicketManagement.Core.ServiceContracts;
-using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using TicketFlow.Application.Common.Interfaces;
+using TicketFlow.Application.Features.Comments.DTOs;
+using TicketFlow.Application.Features.Comments.Commands.AddComment;
+using TicketFlow.Application.Features.Comments.Queries.GetComments;
 
-namespace SupportTicketManagement.API.Controllers
+namespace TicketFlow.API.Controllers
 {
     /// <summary>
     /// Controller responsible for managing comments on a specific support ticket.
@@ -16,22 +18,11 @@ namespace SupportTicketManagement.API.Controllers
     [Authorize]
     public class TicketCommentsController : CustomControllerBase
     {
-        private readonly ICommentsService _commentsService;
+        private readonly ICurrentUserService _currentUserService;
 
-        public TicketCommentsController(ICommentsService commentsService)
+        public TicketCommentsController(IMediator mediator, ICurrentUserService currentUserService) : base(mediator)
         {
-            _commentsService = commentsService;
-        }
-
-        private Guid GetUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
-        }
-
-        private string GetUserRole()
-        {
-            return User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
+            _currentUserService = currentUserService;
         }
 
         /// <summary>
@@ -46,13 +37,10 @@ namespace SupportTicketManagement.API.Controllers
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetComments(Guid ticketId)
         {
-            var response = await _commentsService.GetCommentsAsync(ticketId, GetUserId(), GetUserRole());
-            
-            if (!response.Success)
-                return ToActionResult(response);
+            var query = new GetCommentsQuery() { Role = _currentUserService.Role, UserId = _currentUserService.UserId, TicketId = ticketId };
+            var response = await _mediator.Send(query);
 
-            var responseData = response as ApiResponseWithData<List<CommentResponse>>;
-            return Ok(responseData?.Data);
+            return Ok(response);
         }
 
         /// <summary>
@@ -62,14 +50,23 @@ namespace SupportTicketManagement.API.Controllers
         /// <param name="request">The content of the new comment.</param>
         /// <returns>A success response if the comment is added.</returns>
         [HttpPost]
-        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(AddCommentResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> AddComment(Guid ticketId, [FromBody] CreateCommentRequest request)
         {
-            var response = await _commentsService.AddCommentAsync(ticketId, request, GetUserId(), GetUserRole());
-            return ToActionResult(response);
+            var command = new AddCommentCommand()
+            {
+                TicketId = ticketId,
+                Role = _currentUserService.Role,
+                UserId = _currentUserService.UserId,
+                Content = request.Content
+            };
+
+            var response = await _mediator.Send(command);
+
+            return Ok(response);
         }
     }
 }
