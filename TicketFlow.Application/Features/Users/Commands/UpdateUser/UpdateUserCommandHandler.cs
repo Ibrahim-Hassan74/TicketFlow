@@ -27,8 +27,8 @@ namespace TicketFlow.Application.Features.Users.Commands.UpdateUser
                 throw new NotFoundException("User not found.");
             }
 
-            user.DisplayName = request.UpdateUser.DisplayName;
-            user.IsDeleted = !request.UpdateUser.IsActive;
+            user.DisplayName = request.DisplayName;
+            user.IsDeleted = !request.IsActive;
 
             var updateResult = await _userManager.UpdateAsync(user);
             if (!updateResult.Succeeded)
