@@ -1,10 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using TicketFlow.Infrastructure.Data;
 using System.Linq.Expressions;
 using TicketFlow.Domain.Entities;
 using TicketFlow.Domain.Contracts;
 
-namespace TicketFlow.Infrastructure.Repository
+namespace TicketFlow.Infrastructure.Persistence.Repository
 {
     public class TicketsRepository : GenericRepository<Ticket>, ITicketsRepository
     {

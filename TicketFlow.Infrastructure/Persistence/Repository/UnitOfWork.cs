@@ -1,7 +1,6 @@
 using TicketFlow.Domain.Contracts;
-using TicketFlow.Infrastructure.Data;
 
-namespace TicketFlow.Infrastructure.Repository
+namespace TicketFlow.Infrastructure.Persistence.Repository
 {
     public class UnitOfWork : IUnitOfWork
     {
