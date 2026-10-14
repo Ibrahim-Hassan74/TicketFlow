@@ -4,10 +4,17 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
-using TicketFlow.Infrastructure.Data;
 using System.Threading.RateLimiting;
 using TicketFlow.API.Exceptions;
+using TicketFlow.API.Services;
+using TicketFlow.Application.Common.Interfaces;
+using System.Text;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using TicketFlow.Domain.Enums;
 using TicketFlow.Domain.IdentityEntities;
+using TicketFlow.Infrastructure.Persistence;
 
 namespace TicketFlow.API.StartupExtensions
 {
@@ -90,6 +97,102 @@ namespace TicketFlow.API.StartupExtensions
                 .AddUserStore<UserStore<ApplicationUser, ApplicationRole, ApplicationDbContext, Guid>>()
                 .AddRoleStore<RoleStore<ApplicationRole, ApplicationDbContext, Guid>>();
 
+            // JWT Authentication
+            var jwtKey = configuration["Jwt:Key"]
+                ?? throw new InvalidOperationException("JWT Key is not configured in appsettings.");
+            var jwtIssuer = configuration["Jwt:Issuer"];
+            var jwtAudiences = configuration.GetSection("Jwt:Audiences").Get<List<string>>() ?? [];
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.SaveToken = true;
+                options.RequireHttpsMetadata = false;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ClockSkew = TimeSpan.Zero,
+                    ValidIssuer = jwtIssuer,
+                    ValidAudiences = jwtAudiences,
+                    RoleClaimType = ClaimTypes.Role,
+                    NameClaimType = ClaimTypes.NameIdentifier,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+                };
+                options.Events = new JwtBearerEvents
+                {
+                    OnChallenge = async context =>
+                    {
+                        context.HandleResponse();
+                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+
+                        var problemDetailsService = context.HttpContext.RequestServices.GetRequiredService<IProblemDetailsService>();
+
+                        var detail = context.AuthenticateFailure is SecurityTokenExpiredException
+                            ? "The access token has expired. Please refresh your token."
+                            : "You are not authorized to access this resource. A valid Bearer token is required.";
+
+                        await problemDetailsService.WriteAsync(new ProblemDetailsContext
+                        {
+                            HttpContext = context.HttpContext,
+                            ProblemDetails = new ProblemDetails
+                            {
+                                Title = "Unauthorized",
+                                Status = StatusCodes.Status401Unauthorized,
+                                Detail = detail,
+                                Instance = context.HttpContext.Request.Path
+                            }
+                        });
+                    },
+                    OnForbidden = async context =>
+                    {
+                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+
+                        var problemDetailsService = context.HttpContext.RequestServices.GetRequiredService<IProblemDetailsService>();
+
+                        await problemDetailsService.WriteAsync(new ProblemDetailsContext
+                        {
+                            HttpContext = context.HttpContext,
+                            ProblemDetails = new ProblemDetails
+                            {
+                                Title = "Forbidden",
+                                Status = StatusCodes.Status403Forbidden,
+                                Detail = "You do not have permission to access this resource.",
+                                Instance = context.HttpContext.Request.Path
+                            }
+                        });
+                    }
+                };
+            });
+
+            // Authorization Policies
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy(nameof(UserRole.Admin), policy =>
+                    policy.RequireRole(nameof(UserRole.Admin)));
+
+                options.AddPolicy(nameof(UserRole.SupportAgent), policy =>
+                    policy.RequireRole(nameof(UserRole.SupportAgent)));
+
+                options.AddPolicy(nameof(UserRole.Customer), policy =>
+                    policy.RequireRole(nameof(UserRole.Customer)));
+
+                options.AddPolicy("NotAuthorized", policy =>
+                {
+                    policy.RequireAssertion(context =>
+                    {
+                        return !(context.User?.Identity?.IsAuthenticated ?? false);
+                    });
+                });
+            });
+
 
 
             services.AddApiVersioning(options =>
@@ -160,6 +263,7 @@ namespace TicketFlow.API.StartupExtensions
                 };
             });
 
+            services.AddScoped<ICurrentUserService, CurrentUserService>();
 
             return services;
         }
