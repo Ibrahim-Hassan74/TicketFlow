@@ -1,4 +1,4 @@
-using TicketFlow.Core.RepositoryContracts;
+using TicketFlow.Domain.Contracts;
 using TicketFlow.Infrastructure.Data;
 
 namespace TicketFlow.Infrastructure.Repository
@@ -23,9 +23,9 @@ namespace TicketFlow.Infrastructure.Repository
         }
 
 
-        public async Task<int> CompleteAsync()
+        public async Task<int> CompleteAsync(CancellationToken ct = default)
         {
-            return await _context.SaveChangesAsync();
+            return await _context.SaveChangesAsync(ct);
         }
     }
 }

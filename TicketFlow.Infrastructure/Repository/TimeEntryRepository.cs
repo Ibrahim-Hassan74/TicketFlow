@@ -1,5 +1,5 @@
-using TicketFlow.Core.Domain.Entities;
-using TicketFlow.Core.RepositoryContracts;
+using TicketFlow.Domain.Contracts;
+using TicketFlow.Domain.Entities;
 using TicketFlow.Infrastructure.Data;
 
 namespace TicketFlow.Infrastructure.Repository

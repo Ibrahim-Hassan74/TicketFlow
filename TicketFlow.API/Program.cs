@@ -18,7 +18,7 @@ builder.Host.UseSerilog();
 
 builder.Services.ConfigureServices(builder.Configuration);
 
-builder.Services.ConfigureInfrastructure(builder.Configuration);
+builder.Services.AddInfrastructureServices(builder.Configuration);
 
 builder.Services.AddApplicationServices();
 

@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using TicketFlow.Core.RepositoryContracts;
 using TicketFlow.Infrastructure.Data;
 using System.Linq.Expressions;
+using TicketFlow.Domain.Contracts;
 
 namespace TicketFlow.Infrastructure.Repository
 {
@@ -16,30 +16,30 @@ namespace TicketFlow.Infrastructure.Repository
             _db = context.Set<TModel>();
         }
         /// <inheritdoc/>
-        public async Task<TModel> AddAsync(TModel entity)
+        public async Task<TModel> AddAsync(TModel entity, CancellationToken ct = default)
         {
             if (entity == null)
             {
                 throw new ArgumentNullException(nameof(entity), "Entity cannot be null");
             }
-            await _db.AddAsync(entity);
+            await _db.AddAsync(entity,ct);
             return entity;
         }
 
         /// <inheritdoc/>
-        public async Task<int> CountAsync()
+        public async Task<int> CountAsync(CancellationToken ct = default)
         {
-            return await _db.CountAsync();
+            return await _db.CountAsync(ct);
         }
 
         /// <inheritdoc/>
-        public async Task<bool> DeleteAsync(Guid id)
+        public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
         {
             if (id == Guid.Empty)
             {
                 throw new ArgumentException("Id cannot be empty", nameof(id));
             }
-            var entity = await _db.FindAsync(id);
+            var entity = await _db.FindAsync([id], ct);
             if (entity == null)
             {
                 return false;
@@ -49,13 +49,13 @@ namespace TicketFlow.Infrastructure.Repository
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<TModel>> GetAllAsync()
+        public async Task<IEnumerable<TModel>> GetAllAsync(CancellationToken ct = default)
         {
-            return await _db.AsNoTracking().ToListAsync();
+            return await _db.AsNoTracking().ToListAsync(ct);
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<TModel>> GetAllAsync(params Expression<Func<TModel, object>>[] includes)
+        public async Task<IEnumerable<TModel>> GetAllAsync(CancellationToken ct = default, params Expression<Func<TModel, object>>[] includes)
         {
             if (includes == null)
             {
@@ -63,18 +63,18 @@ namespace TicketFlow.Infrastructure.Repository
             }
             if (includes.Length == 0)
             {
-                return await GetAllAsync();
+                return await GetAllAsync(ct);
             }
             IQueryable<TModel> query = _db;
             foreach (var include in includes)
             {
                 query = query.Include(include);
             }
-            return await query.ToListAsync();
+            return await query.ToListAsync(ct);
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<TModel>> GetFilteredAsync(Expression<Func<TModel, bool>> predicate, params Expression<Func<TModel, object>>[] includes)
+        public async Task<IEnumerable<TModel>> GetFilteredAsync(Expression<Func<TModel, bool>> predicate, CancellationToken ct = default, params Expression<Func<TModel, object>>[] includes)
         {
             if (predicate == null)
             {
@@ -91,17 +91,17 @@ namespace TicketFlow.Infrastructure.Repository
                 }
             }
             
-            return await query.ToListAsync();
+            return await query.ToListAsync(ct);
         }
 
         /// <inheritdoc/>
-        public async Task<TModel?> GetByIdAsync(Guid id)
+        public async Task<TModel?> GetByIdAsync(Guid id, CancellationToken ct = default)
         {
-            return await _db.FindAsync(id);
+            return await _db.FindAsync([id], ct);
         }
 
         /// <inheritdoc/>
-        public async Task<TModel?> GetByIdAsync(Guid id, params Expression<Func<TModel, object>>[] includes)
+        public async Task<TModel?> GetByIdAsync(Guid id, CancellationToken ct = default, params Expression<Func<TModel, object>>[] includes)
         {
             if (id == Guid.Empty)
             {
@@ -113,25 +113,22 @@ namespace TicketFlow.Infrastructure.Repository
             }
             if (includes.Length == 0)
             {
-                return await GetByIdAsync(id);
+                return await GetByIdAsync(id, ct);
             }
             IQueryable<TModel> query = _db;
             foreach (var include in includes)
             {
                 query = query.Include(include);
             }
-            return await query.FirstOrDefaultAsync(e => EF.Property<Guid>(e, "Id") == id);
+            return await query.FirstOrDefaultAsync(e => EF.Property<Guid>(e, "Id") == id, ct);
         }
 
         /// <inheritdoc/>
-        public async Task<TModel> UpdateAsync(TModel entity)
+        public Task<TModel> UpdateAsync(TModel entity, CancellationToken ct = default)
         {
-            if (entity == null)
-            {
-                throw new ArgumentNullException(nameof(entity), "Entity cannot be null");
-            }
+            ArgumentNullException.ThrowIfNull(entity);
             _context.Entry(entity).State = EntityState.Modified;
-            return entity;
+            return Task.FromResult(entity);
         }
     }
 }
