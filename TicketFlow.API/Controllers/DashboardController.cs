@@ -1,7 +1,8 @@
-﻿using MediatR;
+using MediatR;
 using Asp.Versioning;
 using TicketFlow.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
+using TicketFlow.API.Attributes;
 using Microsoft.AspNetCore.Authorization;
 using TicketFlow.Application.Common.Models;
 using TicketFlow.Application.Common.Interfaces;
@@ -11,29 +12,24 @@ using TicketFlow.Application.Features.Dashboard.Queries.GetAgentWorkload;
 
 namespace TicketFlow.API.Controllers
 {
-    /// <summary>
-    /// Controller responsible for retrieving system-wide dashboard metrics.
-    /// Provides endpoints for overall statistics, agent workload, and ticket trends.
-    /// Restricted to administrators only.
-    /// </summary>
+    /// <include file='../Docs/DashboardDocs.xml' path='docs/members[@name="DashboardController"]/Class/*' />
     [ApiVersion(1.0)]
     [Authorize(Roles = nameof(UserRole.Admin))]
+    [ProducesProblem(StatusCodes.Status401Unauthorized)]
+    [ProducesProblem(StatusCodes.Status403Forbidden)]
     public class DashboardController : CustomControllerBase
     {
         private readonly ICurrentUserService _currentUserService;
+
+        /// <include file='../Docs/DashboardDocs.xml' path='docs/members[@name="DashboardController"]/Constructor/*' />
         public DashboardController(IMediator mediator, ICurrentUserService currentUserService) : base(mediator)
         {
             _currentUserService = currentUserService;
         }
 
-        /// <summary>
-        /// Retrieves system-wide ticket statistics.
-        /// </summary>
-        /// <returns>Counts for tickets in various states and average resolution time.</returns>
+        /// <include file='../Docs/DashboardDocs.xml' path='docs/members[@name="DashboardController"]/GetStats/*' />
         [HttpGet("stats")]
         [ProducesResponseType(typeof(DashboardStatsResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> GetStats()
         {
             var role = _currentUserService.Role;
@@ -45,14 +41,9 @@ namespace TicketFlow.API.Controllers
             return Ok(response);
         }
 
-        /// <summary>
-        /// Retrieves the current workload for all agents.
-        /// </summary>
-        /// <returns>A list of agents with their open/in-progress ticket counts and total logged time.</returns>
+        /// <include file='../Docs/DashboardDocs.xml' path='docs/members[@name="DashboardController"]/GetAgentWorkload/*' />
         [HttpGet("agent-workload")]
         [ProducesResponseType(typeof(List<AgentWorkloadResponse>), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> GetAgentWorkload()
         {
             var role = _currentUserService.Role;
@@ -64,16 +55,10 @@ namespace TicketFlow.API.Controllers
             return Ok(response);
         }
 
-        /// <summary>
-        /// Retrieves ticket creation and closure trends over a specified number of days.
-        /// </summary>
-        /// <param name="days">The number of days to look back (default is 30).</param>
-        /// <returns>A chronological list of daily ticket trends.</returns>
+        /// <include file='../Docs/DashboardDocs.xml' path='docs/members[@name="DashboardController"]/GetTicketTrends/*' />
         [HttpGet("ticket-trends")]
         [ProducesResponseType(typeof(List<TicketTrendResponse>), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
+        [ProducesProblem(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetTicketTrends([FromQuery] int days = 30)
         {
             var role = _currentUserService.Role;

@@ -2,6 +2,7 @@ using MediatR;
 using Asp.Versioning;
 using TicketFlow.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
+using TicketFlow.API.Attributes;
 using Microsoft.AspNetCore.Authorization;
 using TicketFlow.Application.Common.Models;
 using TicketFlow.Application.Common.Interfaces;
@@ -16,33 +17,24 @@ using TicketFlow.Application.Features.Tickets.Commands.UpdateTicketPriority;
 
 namespace TicketFlow.API.Controllers
 {
-    /// <summary>
-    /// Controller responsible for managing support tickets.
-    /// Provides endpoints for creating, retrieving, updating, and assigning tickets.
-    /// Uses role-based logic to isolate data appropriately (Admin, SupportAgent, Customer).
-    /// </summary>
+    /// <include file='../Docs/TicketsDocs.xml' path='docs/members[@name="TicketsController"]/Class/*' />
     [ApiVersion(1.0)]
+    [ProducesProblem(StatusCodes.Status400BadRequest)]
+    [ProducesProblem(StatusCodes.Status401Unauthorized)]
     public class TicketsController : CustomControllerBase
     {
         private readonly ICurrentUserService _currentUserService;
 
+        /// <include file='../Docs/TicketsDocs.xml' path='docs/members[@name="TicketsController"]/Constructor/*' />
         public TicketsController(IMediator mediator, ICurrentUserService currentUserService) : base(mediator)
         {
             _currentUserService = currentUserService;
         }
 
-        /// <summary>
-        /// Retrieves a paginated list of tickets.
-        /// Results are filtered based on the user's role:
-        /// Admins see all tickets, Agents see only assigned tickets, Customers see only their own tickets.
-        /// </summary>
-        /// <param name="request">Pagination, filtering, and sorting parameters.</param>
-        /// <returns>A paginated list of tickets.</returns>
-        [Authorize]
+        /// <include file='../Docs/TicketsDocs.xml' path='docs/members[@name="TicketsController"]/GetTickets/*' />
         [HttpGet]
+        [Authorize]
         [ProducesResponseType(typeof(PaginatedResponse<TicketResponse>), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GetTickets([FromQuery] TicketQueryRequest request)
         {
             var query = new GetTicketsQuery
@@ -62,17 +54,12 @@ namespace TicketFlow.API.Controllers
             return Ok(response);
         }
 
-        /// <summary>
-        /// Retrieves a specific ticket by its ID.
-        /// Access is restricted based on the user's role and ownership/assignment of the ticket.
-        /// </summary>
-        /// <param name="id">The unique identifier of the ticket.</param>
-        /// <returns>The ticket details.</returns>
+        /// <include file='../Docs/TicketsDocs.xml' path='docs/members[@name="TicketsController"]/GetTicketById/*' />
         [Authorize]
         [HttpGet("{id:guid}")]
         [ProducesResponseType(typeof(TicketResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesProblem(StatusCodes.Status401Unauthorized)]
+        [ProducesProblem(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetTicketById(Guid id)
         {
             var query = new GetTicketByIdQuery(id, _currentUserService.UserId, _currentUserService.Role);
@@ -82,18 +69,11 @@ namespace TicketFlow.API.Controllers
             return Ok(response);
         }
 
-        /// <summary>
-        /// Creates a new support ticket.
-        /// Only users with the Customer role can create tickets.
-        /// </summary>
-        /// <param name="request">The ticket details (Title, Description, Priority).</param>
-        /// <returns>The newly created ticket.</returns>
+        /// <include file='../Docs/TicketsDocs.xml' path='docs/members[@name="TicketsController"]/CreateTicket/*' />
         [HttpPost]
         [Authorize(Roles = nameof(UserRole.Customer))]
-        [ProducesResponseType(typeof(TicketResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(TicketResponse), StatusCodes.Status201Created)]
+        [ProducesProblem(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> CreateTicket([FromBody] CreateTicketRequest request)
         {
             var command = new CreateTicketCommand()
@@ -104,23 +84,16 @@ namespace TicketFlow.API.Controllers
 
             var response = await _mediator.Send(command);
 
-            return Ok(response);
+            return CreatedAtAction(nameof(GetTicketById), new { id = response.Id }, response);
         }
 
-        /// <summary>
-        /// Updates the core details (Title, Description) of a ticket.
-        /// Only users with the Admin role can perform this general update.
-        /// </summary>
-        /// <param name="id">The unique identifier of the ticket.</param>
-        /// <param name="request">The updated ticket details.</param>
-        /// <returns>Success response.</returns>
+
+        /// <include file='../Docs/TicketsDocs.xml' path='docs/members[@name="TicketsController"]/UpdateTicket/*' />
         [HttpPut("{id:guid}")]
         [Authorize(Roles = nameof(UserRole.Admin))]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(TicketResponse), StatusCodes.Status204NoContent)]
+        [ProducesProblem(StatusCodes.Status403Forbidden)]
+        [ProducesProblem(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateTicket(Guid id, [FromBody] UpdateTicketRequest request)
         {
             var command = new UpdateTicketCommand()
@@ -130,27 +103,16 @@ namespace TicketFlow.API.Controllers
                 UserId = _currentUserService.UserId
             };
 
-            var response = await _mediator.Send(command);
+            await _mediator.Send(command);
 
-            return Ok(response);
+            return NoContent();
         }
 
-        /// <summary>
-        /// Updates the status of a ticket.
-        /// Role rules apply:
-        /// - Admin: Can set any status.
-        /// - SupportAgent: Can resolve assigned tickets.
-        /// - Customer: Can close or reopen their own tickets.
-        /// </summary>
-        /// <param name="id">The unique identifier of the ticket.</param>
-        /// <param name="request">The new status.</param>
-        /// <returns>Success response.</returns>
+        /// <include file='../Docs/TicketsDocs.xml' path='docs/members[@name="TicketsController"]/UpdateTicketStatus/*' />
         [Authorize]
         [HttpPatch("{id:guid}/status")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesProblem(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateTicketStatus(Guid id, [FromBody] UpdateTicketStatusRequest request)
         {
             var command = new UpdateTicketStatusCommand()
@@ -163,23 +125,15 @@ namespace TicketFlow.API.Controllers
 
             await _mediator.Send(command);
 
-            return Ok();
+            return NoContent();
         }
 
-        /// <summary>
-        /// Updates the priority of a ticket.
-        /// Only users with the Admin role can change ticket priority.
-        /// </summary>
-        /// <param name="id">The unique identifier of the ticket.</param>
-        /// <param name="request">The new priority.</param>
-        /// <returns>Success response.</returns>
+        /// <include file='../Docs/TicketsDocs.xml' path='docs/members[@name="TicketsController"]/UpdateTicketPriority/*' />
         [HttpPatch("{id:guid}/priority")]
         [Authorize(Roles = nameof(UserRole.Admin))]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesProblem(StatusCodes.Status403Forbidden)]
+        [ProducesProblem(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateTicketPriority(Guid id, [FromBody] UpdateTicketPriorityRequest request)
         {
             var command = new UpdateTicketPriorityCommand()
@@ -191,23 +145,15 @@ namespace TicketFlow.API.Controllers
 
             await _mediator.Send(command);
 
-            return Ok();
+            return NoContent();
         }
 
-        /// <summary>
-        /// Assigns a Support Agent to a ticket.
-        /// Only users with the Admin role can assign agents.
-        /// </summary>
-        /// <param name="id">The unique identifier of the ticket.</param>
-        /// <param name="request">The ID of the Support Agent.</param>
-        /// <returns>Success response.</returns>
+        /// <include file='../Docs/TicketsDocs.xml' path='docs/members[@name="TicketsController"]/AssignAgent/*' />
         [HttpPatch("{id:guid}/assign")]
         [Authorize(Roles = nameof(UserRole.Admin))]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status403Forbidden)]
-        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesProblem(StatusCodes.Status403Forbidden)]
+        [ProducesProblem(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> AssignAgent(Guid id, [FromBody] AssignTicketRequest request)
         {
             var command = new AssignAgentCommand()
@@ -219,7 +165,7 @@ namespace TicketFlow.API.Controllers
 
             await _mediator.Send(command);
 
-            return Ok();
+            return NoContent();
         }
     }
 }

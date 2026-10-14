@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<docs>
+  <members name="TicketTimeEntriesController">
+    <Class>
+      <summary>
+        Controller responsible for managing logged work hours and time entries on support tickets.
+      </summary>
+    </Class>
+
+    <Constructor>
+      <summary>
+        Initializes a new instance of the <see cref="TicketFlow.API.Controllers.TicketTimeEntriesController"/> class.
+      </summary>
+      <param name="mediator">The MediatR mediator instance.</param>
+      <param name="currentUserService">The service used to obtain the current authenticated user's ID and role.</param>
+    </Constructor>
+
+    <GetTimeEntries>
+      <summary>
+        Retrieves all time logs and the total duration recorded for a specific ticket.
+      </summary>
+      <remarks>
+        Restricted to Administrators and the Support Agent assigned to the ticket. Customers are not permitted to view time entries.
+      </remarks>
+      <param name="ticketId">The unique identifier (GUID) of the ticket.</param>
+      <returns>A list of individual time log entries along with cumulative total logged minutes.</returns>
+      <response code="200">Returns the time entry logs for the ticket.</response>
+      <response code="401">If the user is not authenticated.</response>
+      <response code="403">If the user is a customer or not assigned to the ticket.</response>
+      <response code="404">If the ticket does not exist.</response>
+    </GetTimeEntries>
+
+    <AddTimeEntry>
+      <summary>
+        Logs a new work duration entry for a specific ticket.
+      </summary>
+      <remarks>
+        Only the Support Agent currently assigned to the ticket can log work time.
+      </remarks>
+      <param name="ticketId">The unique identifier (GUID) of the ticket.</param>
+      <param name="request">The time entry payload (work date, duration in minutes, and work description).</param>
+      <returns>An empty success response confirmation.</returns>
+      <response code="200">Time entry was successfully logged.</response>
+      <response code="400">If the request payload fails validation (e.g. duration &lt;= 0).</response>
+      <response code="401">If the user is not authenticated.</response>
+      <response code="403">If the caller is not the assigned support agent.</response>
+      <response code="404">If the ticket does not exist.</response>
+    </AddTimeEntry>
+  </members>
+</docs>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<docs>
+  <members name="AccountController">
+    <Class>
+      <summary>
+        Controller responsible for user authentication actions such as registration, login, token refresh, and profile retrieval.
+      </summary>
+    </Class>
+
+    <Constructor>
+      <summary>
+        Initializes a new instance of the <see cref="TicketFlow.API.Controllers.AccountController"/> class.
+      </summary>
+      <param name="mediator">The MediatR mediator instance.</param>
+      <param name="currentUserService">The service used to obtain the current authenticated user's ID and role.</param>
+    </Constructor>
+
+    <PostRegister>
+      <summary>
+        Registers a new user account in the system.
+      </summary>
+      <param name="command">User registration details including username, email, phone, and password.</param>
+      <returns>The registration result details.</returns>
+      <response code="200">Registration succeeded and the user account was created.</response>
+      <response code="400">If the registration payload fails validation (e.g. invalid email format, weak password).</response>
+      <response code="409">If the email or username is already taken.</response>
+    </PostRegister>
+
+    <PostLogin>
+      <summary>
+        Authenticates an existing user and generates access and refresh tokens.
+      </summary>
+      <param name="command">The user's login credentials (email, password, rememberMe flag).</param>
+      <returns>An authentication response containing the JWT access token and refresh token.</returns>
+      <response code="200">Login succeeded with access token and refresh token.</response>
+      <response code="400">If required login fields are missing or malformed.</response>
+      <response code="401">If the email and password combination is invalid.</response>
+      <response code="403">If the account has been deactivated.</response>
+      <response code="404">If no user exists with the specified email.</response>
+      <response code="423">If the account is temporarily locked out due to multiple failed login attempts.</response>
+    </PostLogin>
+
+    <RefreshToken>
+      <summary>
+        Generates a new access token using a valid, unexpired refresh token.
+      </summary>
+      <param name="command">Contains the expired access token and its matching refresh token.</param>
+      <returns>An authentication response with the refreshed access token and refresh token.</returns>
+      <response code="200">Token was refreshed successfully.</response>
+      <response code="400">If the refresh token is missing, expired, or invalid.</response>
+      <response code="404">If the user associated with the token cannot be found.</response>
+    </RefreshToken>
+
+    <PostLogout>
+      <summary>
+        Logs out the authenticated user by invalidating their active refresh token.
+      </summary>
+      <remarks>
+        Requires an authenticated user session. The refresh token associated with the account is cleared.
+      </remarks>
+      <returns>An empty success response.</returns>
+      <response code="200">Logout was successful.</response>
+      <response code="401">If the user is not authenticated.</response>
+    </PostLogout>
+
+    <GetCurrentUser>
+      <summary>
+        Retrieves profile details for the currently authenticated user.
+      </summary>
+      <remarks>
+        Reads the user identifier directly from the JWT claims and fetches account status and profile information.
+      </remarks>
+      <returns>The profile information of the authenticated user.</returns>
+      <response code="200">Returns the user profile details.</response>
+      <response code="401">If the user is not authenticated.</response>
+      <response code="404">If the user account no longer exists.</response>
+    </GetCurrentUser>
+  </members>
+</docs>

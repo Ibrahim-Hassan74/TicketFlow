@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<docs>
+  <members name="TicketActivitiesController">
+    <Class>
+      <summary>
+        Controller responsible for retrieving the chronological activity timeline and audit trail for a ticket.
+      </summary>
+    </Class>
+
+    <Constructor>
+      <summary>
+        Initializes a new instance of the <see cref="TicketFlow.API.Controllers.TicketActivitiesController"/> class.
+      </summary>
+      <param name="mediator">The MediatR mediator instance.</param>
+      <param name="currentUserService">The service used to obtain the current authenticated user's ID and role.</param>
+    </Constructor>
+
+    <GetActivities>
+      <summary>
+        Retrieves the chronological audit trail and activity log for a specific ticket.
+      </summary>
+      <remarks>
+        Access is authorized using role-based ticket ownership checks:
+        Admins can access any ticket; Agents can access assigned tickets; Customers can access their own tickets.
+      </remarks>
+      <param name="ticketId">The unique identifier (GUID) of the ticket.</param>
+      <returns>A chronological list of activity log entries recorded for the ticket.</returns>
+      <response code="200">Returns the ticket activity timeline.</response>
+      <response code="401">If the user is not authenticated.</response>
+      <response code="404">If the ticket does not exist or the caller lacks access permission.</response>
+    </GetActivities>
+  </members>
+</docs>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<docs>
+  <members name="TicketCommentsController">
+    <Class>
+      <summary>
+        Controller responsible for managing communication and comments on support tickets.
+      </summary>
+    </Class>
+
+    <Constructor>
+      <summary>
+        Initializes a new instance of the <see cref="TicketFlow.API.Controllers.TicketCommentsController"/> class.
+      </summary>
+      <param name="mediator">The MediatR mediator instance.</param>
+      <param name="currentUserService">The service used to obtain the current authenticated user's ID and role.</param>
+    </Constructor>
+
+    <GetComments>
+      <summary>
+        Retrieves a chronological list of comments for a specific support ticket.
+      </summary>
+      <remarks>
+        Access is restricted using ticket ownership rules:
+        Admins can view comments on any ticket; Agents can view comments on assigned tickets; Customers can view comments on their own tickets.
+      </remarks>
+      <param name="ticketId">The unique identifier (GUID) of the ticket.</param>
+      <returns>A list of comment response DTOs including author display names and timestamps.</returns>
+      <response code="200">Returns the comments for the ticket.</response>
+      <response code="401">If the user is not authenticated.</response>
+      <response code="404">If the ticket does not exist or caller lacks access permission.</response>
+    </GetComments>
+
+    <AddComment>
+      <summary>
+        Adds a new comment to a support ticket.
+      </summary>
+      <remarks>
+        Only users with access to the ticket (Admin, Assigned Agent, or Ticket Owner Customer) can add comments.
+        Adding a comment automatically logs a &lt;code&gt;CommentAdded&lt;/code&gt; activity event.
+      </remarks>
+      <param name="ticketId">The unique identifier (GUID) of the ticket.</param>
+      <param name="request">The comment content payload.</param>
+      <returns>A confirmation response indicating the comment was added.</returns>
+      <response code="200">Comment was successfully posted.</response>
+      <response code="400">If the comment content is empty or exceeds length limits.</response>
+      <response code="401">If the user is not authenticated.</response>
+      <response code="404">If the ticket does not exist or caller lacks access permission.</response>
+    </AddComment>
+  </members>
+</docs>

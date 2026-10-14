@@ -52,14 +52,21 @@ namespace TicketFlow.API.Exceptions
                         Detail = exception.Message
                     },
 
-                // 403 - Forbidden Exceptions
-                ForbiddenException or AccountDeactivatedException
-                    or AccountLockedException or LoginNotAllowedException => new ProblemDetails
-                    {
-                        Title = "Forbidden",
-                        Status = StatusCodes.Status403Forbidden,
-                        Detail = exception.Message
-                    },
+                // 423 - Locked (Account Lockout)
+                AccountLockedException => new ProblemDetails
+                {
+                    Title = "Account Locked",
+                    Status = StatusCodes.Status423Locked,
+                    Detail = exception.Message
+                },
+
+                // 403 - Forbidden
+                ForbiddenException or AccountDeactivatedException or LoginNotAllowedException => new ProblemDetails
+                {
+                    Title = "Forbidden",
+                    Status = StatusCodes.Status403Forbidden,
+                    Detail = exception.Message
+                },
 
                 // 404 - Not Found
                 NotFoundException => new ProblemDetails
