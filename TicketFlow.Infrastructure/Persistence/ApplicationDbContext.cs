@@ -4,7 +4,7 @@ using System.Reflection;
 using TicketFlow.Domain.IdentityEntities;
 using TicketFlow.Domain.Entities;
 
-namespace TicketFlow.Infrastructure.Data
+namespace TicketFlow.Infrastructure.Persistence
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>
     {

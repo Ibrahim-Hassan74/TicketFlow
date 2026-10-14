@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using TicketFlow.Domain.Entities;
 
-namespace TicketFlow.Infrastructure.Data.Configuration
+namespace TicketFlow.Infrastructure.Persistence.Configuration
 {
     public class TicketConfiguration : IEntityTypeConfiguration<Ticket>
     {

@@ -1,8 +1,7 @@
 using TicketFlow.Domain.Contracts;
 using TicketFlow.Domain.Entities;
-using TicketFlow.Infrastructure.Data;
 
-namespace TicketFlow.Infrastructure.Repository
+namespace TicketFlow.Infrastructure.Persistence.Repository
 {
     public class TicketActivityRepository : GenericRepository<TicketActivity>, ITicketActivityRepository
     {

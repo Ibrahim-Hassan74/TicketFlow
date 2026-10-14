@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TicketFlow.Application.Common.Interfaces;
 using TicketFlow.Domain.Contracts;
-using TicketFlow.Infrastructure.Repository;
+using TicketFlow.Infrastructure.Persistence.Repository;
+using TicketFlow.Infrastructure.Services;
 
 namespace TicketFlow.Infrastructure
 {
@@ -12,6 +14,12 @@ namespace TicketFlow.Infrastructure
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
+            services.AddScoped<IJwtService, JwtService>();
+
+            services.AddScoped<IDashboardRepository, DashboardRepository>();
+
+            services.AddScoped<IUserRepository, UserRepository>();
 
             return services;
         }
