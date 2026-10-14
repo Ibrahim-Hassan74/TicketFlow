@@ -30,9 +30,9 @@ namespace TicketFlow.Application.Features.Tickets.Commands.CreateTicket
 
             var ticket = new Ticket
             {
-                Title = request.CreateTicket.Title,
-                Description = request.CreateTicket.Description,
-                Priority = request.CreateTicket.Priority,
+                Title = request.Title,
+                Description = request.Description,
+                Priority = request.Priority,
                 Status = TicketStatus.Open,
                 CustomerId = request.CustomerId,
                 CreatedAt = DateTimeOffset.UtcNow,

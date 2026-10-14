@@ -4,11 +4,11 @@ using TicketFlow.Domain.Contracts;
 
 namespace TicketFlow.Application.Features.Tickets.Commands.UpdateTicket
 {
-    public sealed class UpdateTicketStatusCommandHandler : IRequestHandler<UpdateTicketCommand, Unit>
+    public sealed class UpdateTicketCommandHandler : IRequestHandler<UpdateTicketCommand, Unit>
     {
         private readonly IUnitOfWork _unitOfWork;
 
-        public UpdateTicketStatusCommandHandler(IUnitOfWork unitOfWork)
+        public UpdateTicketCommandHandler(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }
@@ -19,8 +19,8 @@ namespace TicketFlow.Application.Features.Tickets.Commands.UpdateTicket
             if (ticket == null)
                 throw new NotFoundException("Ticket not found.");
 
-            ticket.Title = request.UpdateTicket.Title;
-            ticket.Description = request.UpdateTicket.Description;
+            ticket.Title = request.Title;
+            ticket.Description = request.Description;
             ticket.UpdatedAt = DateTimeOffset.UtcNow;
 
             await _unitOfWork.CompleteAsync(cancellationToken);
