@@ -5,7 +5,6 @@ using TicketFlow.Application.Common.Exceptions;
 using TicketFlow.Application.Common.Interfaces;
 using TicketFlow.Application.Features.Activities.DTOs;
 using TicketFlow.Domain.Contracts;
-using TicketFlow.Domain.Enums;
 
 namespace TicketFlow.Application.Features.Activities.Queries.GetActivities
 {
