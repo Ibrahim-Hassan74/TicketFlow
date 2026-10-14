@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using TicketFlow.Core.Domain.Entities;
-using TicketFlow.Core.Domain.IdentityEntities;
 using System.Reflection;
+using TicketFlow.Domain.IdentityEntities;
+using TicketFlow.Domain.Entities;
 
 namespace TicketFlow.Infrastructure.Data
 {
