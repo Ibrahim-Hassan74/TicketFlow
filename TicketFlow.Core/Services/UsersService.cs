@@ -1,13 +1,13 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using SupportTicketManagement.Core.DTO;
-using SupportTicketManagement.Core.Enums;
-using SupportTicketManagement.Core.Helper;
-using SupportTicketManagement.Core.ServiceContracts;
-using SupportTicketManagement.Core.Domain.IdentityEntities;
+using TicketFlow.Core.DTO;
+using TicketFlow.Core.Enums;
+using TicketFlow.Core.Helper;
+using TicketFlow.Core.ServiceContracts;
+using TicketFlow.Core.Domain.IdentityEntities;
 using Microsoft.Extensions.Logging;
 
-namespace SupportTicketManagement.Core.Services
+namespace TicketFlow.Core.Services
 {
     public class UsersService : IUsersService
     {

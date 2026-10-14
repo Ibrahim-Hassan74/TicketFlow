@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using SupportTicketManagement.Core.Domain.Entities;
-using SupportTicketManagement.Core.Enums;
+using TicketFlow.Core.Domain.Entities;
+using TicketFlow.Core.Enums;
 
-namespace SupportTicketManagement.Infrastructure.Data.Configuration
+namespace TicketFlow.Infrastructure.Data.Configuration
 {
     public class TicketConfiguration : IEntityTypeConfiguration<Ticket>
     {

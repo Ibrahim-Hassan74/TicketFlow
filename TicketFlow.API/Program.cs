@@ -1,8 +1,7 @@
 using Serilog;
-using SupportTicketManagement.API.Middleware;
-using SupportTicketManagement.API.StartupExtensions;
-using SupportTicketManagement.Core;
-using SupportTicketManagement.Infrastructure;
+using TicketFlow.API.StartupExtensions;
+using TicketFlow.Infrastructure;
+using TicketFlow.Application;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,9 +20,11 @@ builder.Services.ConfigureServices(builder.Configuration);
 
 builder.Services.ConfigureInfrastructure(builder.Configuration);
 
-builder.Services.ConfigureCore(builder.Configuration);
+builder.Services.AddApplicationServices();
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
 
 app.UseSerilogRequestLogging();
 
@@ -36,8 +37,6 @@ app.UseSerilogRequestLogging();
         options.SwaggerEndpoint("/swagger/v2/swagger.json", "2.0");
     });
 }
-
-app.UseExceptionHandlingMiddleware();
 
 app.UseCors("AllowFrontend");
 

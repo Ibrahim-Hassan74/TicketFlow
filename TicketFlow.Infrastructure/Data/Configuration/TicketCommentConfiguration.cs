@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using SupportTicketManagement.Core.Domain.Entities;
+using TicketFlow.Core.Domain.Entities;
 
-namespace SupportTicketManagement.Infrastructure.Data.Configuration
+namespace TicketFlow.Infrastructure.Data.Configuration
 {
     public class TicketCommentConfiguration : IEntityTypeConfiguration<TicketComment>
     {

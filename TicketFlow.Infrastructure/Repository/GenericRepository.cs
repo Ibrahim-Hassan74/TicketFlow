@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using SupportTicketManagement.Core.RepositoryContracts;
-using SupportTicketManagement.Infrastructure.Data;
+using TicketFlow.Core.RepositoryContracts;
+using TicketFlow.Infrastructure.Data;
 using System.Linq.Expressions;
 
-namespace SupportTicketManagement.Infrastructure.Repository
+namespace TicketFlow.Infrastructure.Repository
 {
     public class GenericRepository<TModel> : IGenericRepository<TModel> where TModel : class
     {

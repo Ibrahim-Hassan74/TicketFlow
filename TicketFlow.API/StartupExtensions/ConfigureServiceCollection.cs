@@ -1,21 +1,25 @@
 using Asp.Versioning;
-using Microsoft.OpenApi;
-using Microsoft.AspNetCore.Mvc;
-using System.Threading.RateLimiting;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
-using SupportTicketManagement.Core.Helper;
-using SupportTicketManagement.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using SupportTicketManagement.Core.Domain.IdentityEntities;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
+using TicketFlow.Infrastructure.Data;
+using System.Threading.RateLimiting;
+using TicketFlow.API.Exceptions;
+using TicketFlow.Domain.IdentityEntities;
 
-namespace SupportTicketManagement.API.StartupExtensions
+namespace TicketFlow.API.StartupExtensions
 {
     public static class ConfigureServiceCollection
     {
         public static IServiceCollection ConfigureServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddControllers();
+
+            services.AddExceptionHandler<GlobalExceptionHandler>();
+
+            services.AddProblemDetails();
 
             services.AddSignalR();
 
@@ -41,7 +45,7 @@ namespace SupportTicketManagement.API.StartupExtensions
             services.AddSwaggerGen(options =>
             {
                 options.IncludeXmlComments(
-                    System.IO.Path.Combine(System.AppContext.BaseDirectory, "SupportTicketManagement.API.xml"),
+                    System.IO.Path.Combine(System.AppContext.BaseDirectory, "TicketFlow.API.xml"),
                     includeControllerXmlComments: true
                 );
 
@@ -60,9 +64,9 @@ namespace SupportTicketManagement.API.StartupExtensions
                         [new OpenApiSecuritySchemeReference("Bearer", document)] = []
                     });
 
-                options.SwaggerDoc("v1", new Microsoft.OpenApi.OpenApiInfo {  Title = "Support Ticket Management Web API", Version = "1.0" });
+                options.SwaggerDoc("v1", new Microsoft.OpenApi.OpenApiInfo {  Title = "Ticket Flow Web API", Version = "1.0" });
 
-                options.SwaggerDoc("v2", new Microsoft.OpenApi.OpenApiInfo { Title = "Support Ticket Management Web API", Version = "2.0" });
+                options.SwaggerDoc("v2", new Microsoft.OpenApi.OpenApiInfo { Title = "Ticket Flow Web API", Version = "2.0" });
                 
                 options.UseInlineDefinitionsForEnums();
 
@@ -121,10 +125,20 @@ namespace SupportTicketManagement.API.StartupExtensions
                 options.OnRejected = async (context, token) =>
                 {
                     context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-                    context.HttpContext.Response.ContentType = "application/json";
 
-                    var response = ApiResponseFactory.TooManyRequests("Too Many Requests");
-                    await context.HttpContext.Response.WriteAsJsonAsync(response);
+                    var problemDetailsService = context.HttpContext.RequestServices.GetRequiredService<IProblemDetailsService>();
+
+                    await problemDetailsService.WriteAsync(new ProblemDetailsContext
+                    {
+                        HttpContext = context.HttpContext,
+                        ProblemDetails = new ProblemDetails
+                        {
+                            Title = "Too Many Requests",
+                            Status = StatusCodes.Status429TooManyRequests,
+                            Detail = "Rate limit exceeded. Please try again later.",
+                            Instance = context.HttpContext.Request.Path
+                        }
+                    });
                 };
             });
 
@@ -132,15 +146,17 @@ namespace SupportTicketManagement.API.StartupExtensions
             {
                 options.InvalidModelStateResponseFactory = context =>
                 {
-                    var errors = context.ModelState
-                        .Where(x => x.Value.Errors.Count > 0)
-                        .SelectMany(x => x.Value.Errors)
-                        .Select(x => x.ErrorMessage)
-                        .ToList();
-
-                    var response = ApiResponseFactory.BadRequest("Validation failed.", errors);
-
-                    return new BadRequestObjectResult(response);
+                    var problemDetails = new ValidationProblemDetails(context.ModelState)
+                    {
+                        Title = "Validation Failed",
+                        Status = StatusCodes.Status400BadRequest,
+                        Detail = "One or more validation errors occurred.",
+                        Instance = context.HttpContext.Request.Path
+                    };
+                    return new BadRequestObjectResult(problemDetails)
+                    {
+                        ContentTypes = { "application/problem+json" }
+                    };
                 };
             });
 

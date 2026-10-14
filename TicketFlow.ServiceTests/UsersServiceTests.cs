@@ -2,13 +2,13 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Moq;
-using SupportTicketManagement.Core.Domain.IdentityEntities;
-using SupportTicketManagement.Core.DTO;
-using SupportTicketManagement.Core.Enums;
-using SupportTicketManagement.Core.Services;
+using TicketFlow.Core.Domain.IdentityEntities;
+using TicketFlow.Core.DTO;
+using TicketFlow.Core.Enums;
+using TicketFlow.Core.Services;
 using Xunit;
 
-namespace SupportTicketManagement.ServiceTests
+namespace TicketFlow.ServiceTests
 {
     public class UsersServiceTests
     {

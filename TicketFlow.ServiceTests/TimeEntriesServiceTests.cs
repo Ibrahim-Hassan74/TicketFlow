@@ -1,15 +1,15 @@
 using FluentAssertions;
 using Moq;
 using Microsoft.Extensions.Logging;
-using SupportTicketManagement.Core.Domain.Entities;
-using SupportTicketManagement.Core.DTO;
-using SupportTicketManagement.Core.Enums;
-using SupportTicketManagement.Core.RepositoryContracts;
-using SupportTicketManagement.Core.Services;
+using TicketFlow.Core.Domain.Entities;
+using TicketFlow.Core.DTO;
+using TicketFlow.Core.Enums;
+using TicketFlow.Core.RepositoryContracts;
+using TicketFlow.Core.Services;
 using System.Linq.Expressions;
 using Xunit;
 
-namespace SupportTicketManagement.ServiceTests
+namespace TicketFlow.ServiceTests
 {
     public class TimeEntriesServiceTests
     {

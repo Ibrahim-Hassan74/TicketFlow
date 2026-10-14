@@ -1,6 +1,6 @@
-﻿using SupportTicketManagement.Core.Enums;
+﻿using TicketFlow.Core.Enums;
 
-namespace SupportTicketManagement.Core.DTO
+namespace TicketFlow.Core.DTO
 {
     public class UserQueryRequest
     {

@@ -1,12 +1,12 @@
 using Microsoft.EntityFrameworkCore;
-using SupportTicketManagement.Core.Domain.Entities;
-using SupportTicketManagement.Core.DTO;
-using SupportTicketManagement.Core.Enums;
-using SupportTicketManagement.Core.RepositoryContracts;
-using SupportTicketManagement.Infrastructure.Data;
+using TicketFlow.Core.Domain.Entities;
+using TicketFlow.Core.DTO;
+using TicketFlow.Core.Enums;
+using TicketFlow.Core.RepositoryContracts;
+using TicketFlow.Infrastructure.Data;
 using System.Linq.Expressions;
 
-namespace SupportTicketManagement.Infrastructure.Repository
+namespace TicketFlow.Infrastructure.Repository
 {
     public class TicketsRepository : GenericRepository<Ticket>, ITicketsRepository
     {

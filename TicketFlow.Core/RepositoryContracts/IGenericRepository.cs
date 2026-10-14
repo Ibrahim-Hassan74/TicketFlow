@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace SupportTicketManagement.Core.RepositoryContracts
+namespace TicketFlow.Core.RepositoryContracts
 {
     public interface IGenericRepository<T> where T : class
     {

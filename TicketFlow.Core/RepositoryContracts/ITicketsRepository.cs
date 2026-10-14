@@ -1,8 +1,8 @@
-using SupportTicketManagement.Core.Domain.Entities;
-using SupportTicketManagement.Core.DTO;
+using TicketFlow.Core.Domain.Entities;
+using TicketFlow.Core.DTO;
 using System.Linq.Expressions;
 
-namespace SupportTicketManagement.Core.RepositoryContracts
+namespace TicketFlow.Core.RepositoryContracts
 {
     public interface ITicketsRepository : IGenericRepository<Ticket>
     {

@@ -1,6 +1,6 @@
-﻿using SupportTicketManagement.Core.DTO;
+﻿using TicketFlow.Core.DTO;
 
-namespace SupportTicketManagement.Core.Helper
+namespace TicketFlow.Core.Helper
 {
     public static class ApiResponseFactory
     {

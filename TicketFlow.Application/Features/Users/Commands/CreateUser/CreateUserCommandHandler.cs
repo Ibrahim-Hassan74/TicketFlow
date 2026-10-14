@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using TicketFlow.Application.Common.Exceptions;
 using TicketFlow.Application.Features.Users.DTOs;
-using TicketFlow.Domain.Domain.IdentityEntities;
 using TicketFlow.Domain.Enums;
 using TicketFlow.Domain.IdentityEntities;
 
@@ -53,7 +52,7 @@ namespace TicketFlow.Application.Features.Users.Commands.CreateUser
             {
                 _logger.LogWarning("Failed to create user {Email} due to identity errors.", request.Email);
                 var errors = createResult.Errors.Select(e => e.Description).ToArray();
-                throw new RegistrationFailedException("Failed to create user.", errors);
+                throw new IdentityOperationException("Failed to create user.", errors);
             }
 
             var roleName = role.ToString();

@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using SupportTicketManagement.Core.Domain.Entities;
-using SupportTicketManagement.Core.Domain.IdentityEntities;
+using TicketFlow.Core.Domain.Entities;
+using TicketFlow.Core.Domain.IdentityEntities;
 using System.Reflection;
 
-namespace SupportTicketManagement.Infrastructure.Data
+namespace TicketFlow.Infrastructure.Data
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>
     {

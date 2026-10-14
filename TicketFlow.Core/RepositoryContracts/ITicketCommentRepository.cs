@@ -1,6 +1,6 @@
-using SupportTicketManagement.Core.Domain.Entities;
+using TicketFlow.Core.Domain.Entities;
 
-namespace SupportTicketManagement.Core.RepositoryContracts
+namespace TicketFlow.Core.RepositoryContracts
 {
     public interface ITicketCommentRepository : IGenericRepository<TicketComment>
     {

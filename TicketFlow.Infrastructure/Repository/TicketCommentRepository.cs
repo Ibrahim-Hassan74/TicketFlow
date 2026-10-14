@@ -1,8 +1,8 @@
-using SupportTicketManagement.Core.Domain.Entities;
-using SupportTicketManagement.Core.RepositoryContracts;
-using SupportTicketManagement.Infrastructure.Data;
+using TicketFlow.Core.Domain.Entities;
+using TicketFlow.Core.RepositoryContracts;
+using TicketFlow.Infrastructure.Data;
 
-namespace SupportTicketManagement.Infrastructure.Repository
+namespace TicketFlow.Infrastructure.Repository
 {
     public class TicketCommentRepository : GenericRepository<TicketComment>, ITicketCommentRepository
     {
