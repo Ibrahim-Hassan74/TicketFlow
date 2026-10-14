@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<docs>
+  <members name="UsersController">
+    <Class>
+      <summary>
+        Controller responsible for user management operations including searching, retrieving, creating, and updating accounts.
+        Restricted to administrators only.
+      </summary>
+    </Class>
+
+    <Constructor>
+      <summary>
+        Initializes a new instance of the <see cref="TicketFlow.API.Controllers.UsersController"/> class.
+      </summary>
+      <param name="mediator">The MediatR mediator instance.</param>
+    </Constructor>
+
+    <GetUsers>
+      <summary>
+        Retrieves a paginated and filterable list of all registered users.
+      </summary>
+      <param name="query">The search, role filter, and pagination query parameters.</param>
+      <returns>A paginated collection of user summary response DTOs.</returns>
+      <response code="200">Returns the paginated list of users.</response>
+      <response code="400">If query parameters are invalid.</response>
+      <response code="401">If the user is not authenticated.</response>
+      <response code="403">If the user is not an administrator.</response>
+    </GetUsers>
+
+    <GetUserById>
+      <summary>
+        Retrieves detailed information for a specific user by their unique identifier.
+      </summary>
+      <param name="id">The unique identifier (GUID) of the user.</param>
+      <returns>The user details if found.</returns>
+      <response code="200">Returns the user details.</response>
+      <response code="401">If the user is not authenticated.</response>
+      <response code="403">If the user is not an administrator.</response>
+      <response code="404">If the user with the specified ID does not exist.</response>
+    </GetUserById>
+
+    <CreateUser>
+      <summary>
+        Creates a new user account with a specified role.
+      </summary>
+      <remarks>
+        Administrators can provision Admin, SupportAgent, or Customer accounts directly.
+      </remarks>
+      <param name="command">User creation payload containing email, displayName, initial password, and role.</param>
+      <returns>The created user details response DTO.</returns>
+      <response code="200">User account created successfully.</response>
+      <response code="400">If the input payload fails validation or identity password rules.</response>
+      <response code="401">If the user is not authenticated.</response>
+      <response code="403">If the user is not an administrator.</response>
+      <response code="409">If an account with the specified email already exists.</response>
+    </CreateUser>
+
+    <UpdateUser>
+      <summary>
+        Updates the profile and active status of an existing user.
+      </summary>
+      <param name="id">The unique identifier (GUID) of the user to update.</param>
+      <param name="request">The updated user details (DisplayName, IsActive status).</param>
+      <returns>The updated user details response DTO.</returns>
+      <response code="200">User was successfully updated.</response>
+      <response code="400">If update payload is invalid or identity update fails.</response>
+      <response code="401">If the user is not authenticated.</response>
+      <response code="403">If the user is not an administrator.</response>
+      <response code="404">If the user with the specified ID does not exist.</response>
+    </UpdateUser>
+
+    <GetAgents>
+      <summary>
+        Retrieves a paginated list of active Support Agents.
+      </summary>
+      <remarks>
+        Commonly used by ticket assignment dropdowns and workload assignment interfaces.
+      </remarks>
+      <param name="pageNumber">The 1-based page index (defaults to 1).</param>
+      <param name="pageSize">The number of agents per page (defaults to 10).</param>
+      <returns>A paginated list of support agent profiles.</returns>
+      <response code="200">Returns the paginated list of agents.</response>
+      <response code="400">If pagination parameters are invalid.</response>
+      <response code="401">If the user is not authenticated.</response>
+      <response code="403">If the user is not an administrator.</response>
+    </GetAgents>
+  </members>
+</docs>

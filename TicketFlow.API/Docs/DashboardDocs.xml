@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<docs>
+  <members name="DashboardController">
+    <Class>
+      <summary>
+        Controller responsible for retrieving system-wide dashboard metrics and analytics.
+        Restricted exclusively to administrators.
+      </summary>
+    </Class>
+
+    <Constructor>
+      <summary>
+        Initializes a new instance of the <see cref="TicketFlow.API.Controllers.DashboardController"/> class.
+      </summary>
+      <param name="mediator">The MediatR mediator instance.</param>
+      <param name="currentUserService">The service used to obtain the current authenticated user's ID and role.</param>
+    </Constructor>
+
+    <GetStats>
+      <summary>
+        Retrieves system-wide ticket counts and key performance indicators.
+      </summary>
+      <remarks>
+        Returns ticket counts grouped by state (Open, InProgress, Resolved, Closed, CriticalOpen)
+        as well as the overall average resolution time in hours.
+      </remarks>
+      <returns>The aggregate dashboard statistics response.</returns>
+      <response code="200">Returns the system statistics.</response>
+      <response code="401">If the user is not authenticated.</response>
+      <response code="403">If the user is not an administrator.</response>
+    </GetStats>
+
+    <GetAgentWorkload>
+      <summary>
+        Retrieves the current workload and open ticket distribution across all support agents.
+      </summary>
+      <remarks>
+        Used by administrators to monitor agent capacity, open ticket volume, and logged work minutes.
+      </remarks>
+      <returns>A list of agent workload metrics.</returns>
+      <response code="200">Returns the agent workload list.</response>
+      <response code="401">If the user is not authenticated.</response>
+      <response code="403">If the user is not an administrator.</response>
+    </GetAgentWorkload>
+
+    <GetTicketTrends>
+      <summary>
+        Retrieves daily ticket creation and closure trend metrics over a specified lookback period.
+      </summary>
+      <param name="days">The number of days to analyze (must be between 1 and 365, default is 30).</param>
+      <returns>A chronological list of daily open and closed ticket counts.</returns>
+      <response code="200">Returns the daily ticket trend metrics.</response>
+      <response code="400">If the days parameter is less than 1 or greater than 365.</response>
+      <response code="401">If the user is not authenticated.</response>
+      <response code="403">If the user is not an administrator.</response>
+    </GetTicketTrends>
+  </members>
+</docs>
