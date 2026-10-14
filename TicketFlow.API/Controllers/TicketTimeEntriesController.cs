@@ -56,7 +56,9 @@ namespace TicketFlow.API.Controllers
             {
                 TicketId = ticketId,
                 AgentId = _currentUserService.UserId,
-                CreateTimeEntry = request
+                WorkDate = request.WorkDate,
+                DurationMinutes = request.DurationMinutes,
+                Description = request.Description
             };
 
             await _mediator.Send(command);

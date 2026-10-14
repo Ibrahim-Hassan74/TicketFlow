@@ -26,16 +26,16 @@ namespace TicketFlow.Application.Features.TimeEntries.Commands.AddTimeEntry
                 throw new NotFoundException("Ticket not found or not assigned to you.");
             }
 
-            if (request.CreateTimeEntry.WorkDate.ToDateTime(TimeOnly.MinValue) > DateTime.UtcNow)
+            if (request.WorkDate.ToDateTime(TimeOnly.MinValue) > DateTime.UtcNow)
                 throw new BadRequestException("Work date cannot be in the future.");
 
             var timeEntry = new TimeEntry
             {
                 TicketId = request.TicketId,
                 AgentId = request.AgentId,
-                WorkDate = request.CreateTimeEntry.WorkDate,
-                DurationMinutes = request.CreateTimeEntry.DurationMinutes,
-                Description = request.CreateTimeEntry.Description,
+                WorkDate = request.WorkDate,
+                DurationMinutes = request.DurationMinutes,
+                Description = request.Description,
                 CreatedAt = DateTimeOffset.UtcNow
             };
 
@@ -46,14 +46,14 @@ namespace TicketFlow.Application.Features.TimeEntries.Commands.AddTimeEntry
                 TicketId = request.TicketId,
                 UserId = request.AgentId,
                 Type = ActivityType.TimeLogged,
-                Description = $"Logged {request.CreateTimeEntry.DurationMinutes} minutes of work.",
+                Description = $"Logged {request.DurationMinutes} minutes of work.",
                 CreatedAt = DateTimeOffset.UtcNow
             };
             await _unitOfWork.TicketActivityRepository.AddAsync(activity, cancellationToken);
 
             await _unitOfWork.CompleteAsync(cancellationToken);
 
-            _logger.LogInformation("Agent {AgentId} logged {Duration} minutes on ticket {TicketId}.", request.AgentId, request.CreateTimeEntry.DurationMinutes, request.TicketId);
+            _logger.LogInformation("Agent {AgentId} logged {Duration} minutes on ticket {TicketId}.", request.AgentId, request.DurationMinutes, request.TicketId);
 
             return Unit.Value;
         }
