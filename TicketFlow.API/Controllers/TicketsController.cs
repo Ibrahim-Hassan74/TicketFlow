@@ -79,7 +79,9 @@ namespace TicketFlow.API.Controllers
             var command = new CreateTicketCommand()
             {
                 CustomerId = _currentUserService.UserId,
-                CreateTicket = request
+                Title = request.Title,
+                Description = request.Description,
+                Priority = request.Priority
             };
 
             var response = await _mediator.Send(command);
@@ -98,9 +100,10 @@ namespace TicketFlow.API.Controllers
         {
             var command = new UpdateTicketCommand()
             {
-                UpdateTicket = request,
                 Id = id,
-                UserId = _currentUserService.UserId
+                UserId = _currentUserService.UserId,
+                Title = request.Title,
+                Description = request.Description
             };
 
             await _mediator.Send(command);
