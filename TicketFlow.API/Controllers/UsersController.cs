@@ -74,7 +74,8 @@ namespace TicketFlow.API.Controllers
             var command = new UpdateUserCommand()
             {
                 Id = id,
-                UpdateUser = request
+                DisplayName = request.DisplayName,
+                IsActive = request.IsActive
             };
 
             var response = await _mediator.Send(command);
