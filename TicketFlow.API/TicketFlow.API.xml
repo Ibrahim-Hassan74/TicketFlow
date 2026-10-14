@@ -297,6 +297,23 @@
         Commonly used by ticket assignment dropdowns and workload assignment interfaces.
       </remarks><param name="pageNumber">The 1-based page index (defaults to 1).</param><param name="pageSize">The number of agents per page (defaults to 10).</param><returns>A paginated list of support agent profiles.</returns><response code="200">Returns the paginated list of agents.</response><response code="400">If pagination parameters are invalid.</response><response code="401">If the user is not authenticated.</response><response code="403">If the user is not an administrator.</response>
         </member>
+        <member name="T:TicketFlow.API.Services.CurrentUserService">
+            <summary>
+            Provides information about the currently authenticated user from the HTTP context.
+            </summary>
+        </member>
+        <member name="P:TicketFlow.API.Services.CurrentUserService.UserId">
+            <summary>
+            Gets the current authenticated user's unique identifier.
+            Returns Guid.Empty if the user is unauthenticated or has no valid ID claim.
+            </summary>
+        </member>
+        <member name="P:TicketFlow.API.Services.CurrentUserService.Role">
+            <summary>
+            Gets the current authenticated user's role (e.g. Admin, SupportAgent, Customer).
+            Returns string.Empty if unauthenticated.
+            </summary>
+        </member>
         <member name="T:Program">
             <summary>
             Auto-generated public partial Program class for top-level statement apps.
