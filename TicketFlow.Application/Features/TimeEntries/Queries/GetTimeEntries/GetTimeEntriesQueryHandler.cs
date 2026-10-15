@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.Extensions.Logging;
 using System.Data;
 using TicketFlow.Application.Common.Exceptions;
@@ -36,17 +36,14 @@ namespace TicketFlow.Application.Features.TimeEntries.Queries.GetTimeEntries
                 throw new NotFoundException("Ticket not found or not assigned to you.");
             }
 
-            var timeEntries = await _unitOfWork.TimeEntryRepository.GetFilteredAsync(
-                t => t.TicketId == request.TicketId,
-                cancellationToken,
-                t => t.Agent);
-
-            var orderedEntries = timeEntries.OrderBy(t => t.WorkDate).ThenBy(t => t.CreatedAt).ToList();
+            var timeEntries = (await _unitOfWork.TimeEntryRepository.GetTimeEntriesByTicketIdAsync(
+                request.TicketId,
+                cancellationToken)).ToList();
 
             var response = new TicketTimeEntriesResponse
             {
-                TotalDurationMinutes = orderedEntries.Sum(t => t.DurationMinutes),
-                Entries = orderedEntries.Select(t => new TimeEntryResponse
+                TotalDurationMinutes = timeEntries.Sum(t => t.DurationMinutes),
+                Entries = timeEntries.Select(t => new TimeEntryResponse
                 {
                     Id = t.Id,
                     TicketId = t.TicketId,

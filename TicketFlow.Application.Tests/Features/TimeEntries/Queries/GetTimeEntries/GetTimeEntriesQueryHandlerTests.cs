@@ -159,8 +159,8 @@ namespace TicketFlow.Application.Tests.Features.TimeEntries.Queries.GetTimeEntri
             };
 
             _timeEntryRepositoryMock
-                .Setup(r => r.GetFilteredAsync(It.IsAny<Expression<Func<TimeEntry, bool>>>(), It.IsAny<CancellationToken>(), It.IsAny<Expression<Func<TimeEntry, object>>[]>()))
-                .ReturnsAsync(new List<TimeEntry> { entry2, entry1 }); // Out of order list to test ordering
+                .Setup(r => r.GetTimeEntriesByTicketIdAsync(ticketId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<TimeEntry> { entry1, entry2 });
 
             // Act
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -172,6 +172,10 @@ namespace TicketFlow.Application.Tests.Features.TimeEntries.Queries.GetTimeEntri
             result.Entries[0].Description.Should().Be("Investigation");
             result.Entries[0].AgentName.Should().Be("Agent Fox");
             result.Entries[1].Description.Should().Be("Fix applied");
+
+            _timeEntryRepositoryMock.Verify(r => r.GetTimeEntriesByTicketIdAsync(
+                ticketId,
+                It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -196,7 +200,7 @@ namespace TicketFlow.Application.Tests.Features.TimeEntries.Queries.GetTimeEntri
                 .ReturnsAsync(ticket);
 
             _timeEntryRepositoryMock
-                .Setup(r => r.GetFilteredAsync(It.IsAny<Expression<Func<TimeEntry, bool>>>(), It.IsAny<CancellationToken>(), It.IsAny<Expression<Func<TimeEntry, object>>[]>()))
+                .Setup(r => r.GetTimeEntriesByTicketIdAsync(ticketId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<TimeEntry>());
 
             // Act

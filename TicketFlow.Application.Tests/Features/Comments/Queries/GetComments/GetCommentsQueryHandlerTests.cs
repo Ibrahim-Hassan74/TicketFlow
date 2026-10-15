@@ -56,10 +56,9 @@ namespace TicketFlow.Application.Tests.Features.Comments.Queries.GetComments
             await act.Should().ThrowAsync<NotFoundException>()
                 .WithMessage("Ticket not found or you do not have access.");
 
-            _ticketCommentRepositoryMock.Verify(r => r.GetFilteredAsync(
-                It.IsAny<Expression<Func<TicketComment, bool>>>(),
-                It.IsAny<CancellationToken>(),
-                It.IsAny<Expression<Func<TicketComment, object>>[]>()), Times.Never);
+            _ticketCommentRepositoryMock.Verify(r => r.GetCommentsByTicketIdAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
@@ -100,11 +99,8 @@ namespace TicketFlow.Application.Tests.Features.Comments.Queries.GetComments
             };
 
             _ticketCommentRepositoryMock
-                .Setup(r => r.GetFilteredAsync(
-                    It.IsAny<Expression<Func<TicketComment, bool>>>(),
-                    It.IsAny<CancellationToken>(),
-                    It.IsAny<Expression<Func<TicketComment, object>>[]>()))
-                .ReturnsAsync(new List<TicketComment> { comment2, comment1 }); // Out of order list to test ordering
+                .Setup(r => r.GetCommentsByTicketIdAsync(ticketId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<TicketComment> { comment1, comment2 });
 
             // Act
             var result = (await _handler.Handle(query, CancellationToken.None)).ToList();
@@ -115,6 +111,10 @@ namespace TicketFlow.Application.Tests.Features.Comments.Queries.GetComments
             result[0].Content.Should().Be("First Comment");
             result[0].UserName.Should().Be("Sarah Admin");
             result[1].Content.Should().Be("Second Comment");
+
+            _ticketCommentRepositoryMock.Verify(r => r.GetCommentsByTicketIdAsync(
+                ticketId,
+                It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }

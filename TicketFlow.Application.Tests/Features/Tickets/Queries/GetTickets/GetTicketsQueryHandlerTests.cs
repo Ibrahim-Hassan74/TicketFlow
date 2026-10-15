@@ -60,20 +60,18 @@ namespace TicketFlow.Application.Tests.Features.Tickets.Queries.GetTickets
                 CreateFakeTicket("Ticket 2")
             };
 
-            _ticketsRepositoryMock.Setup(r => r.GetFilteredTicketsAsync(
-                It.IsAny<Expression<Func<Ticket, bool>>?>(),
-                It.IsAny<Func<IQueryable<Ticket>, IOrderedQueryable<Ticket>>>(),
+            _ticketsRepositoryMock.Setup(r => r.GetTicketsPagedAsync(
+                query.Role,
+                query.UserId,
+                query.Status,
+                query.Priority,
+                query.Search,
                 query.Page,
                 query.PageSize,
-                It.IsAny<CancellationToken>(),
-                It.IsAny<Expression<Func<Ticket, object>>>(),
-                It.IsAny<Expression<Func<Ticket, object>>>()))
-                .ReturnsAsync(fakeTickets);
-
-            _ticketsRepositoryMock.Setup(r => r.CountFilteredTicketsAsync(
-                It.IsAny<Expression<Func<Ticket, bool>>?>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()))
-                .ReturnsAsync(2);
+                .ReturnsAsync((fakeTickets, 2));
 
             // Act
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -87,17 +85,16 @@ namespace TicketFlow.Application.Tests.Features.Tickets.Queries.GetTickets
             result.Items.First().Title.Should().Be("Ticket 1");
             result.Items.First().CustomerName.Should().Be("John Doe");
 
-            _ticketsRepositoryMock.Verify(r => r.GetFilteredTicketsAsync(
-                It.IsAny<Expression<Func<Ticket, bool>>?>(),
-                It.IsAny<Func<IQueryable<Ticket>, IOrderedQueryable<Ticket>>>(),
+            _ticketsRepositoryMock.Verify(r => r.GetTicketsPagedAsync(
+                query.Role,
+                query.UserId,
+                query.Status,
+                query.Priority,
+                query.Search,
                 query.Page,
                 query.PageSize,
-                It.IsAny<CancellationToken>(),
-                It.IsAny<Expression<Func<Ticket, object>>>(),
-                It.IsAny<Expression<Func<Ticket, object>>>()), Times.Once);
-
-            _ticketsRepositoryMock.Verify(r => r.CountFilteredTicketsAsync(
-                It.IsAny<Expression<Func<Ticket, bool>>?>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()), Times.Once);
         }
 
@@ -117,20 +114,18 @@ namespace TicketFlow.Application.Tests.Features.Tickets.Queries.GetTickets
             var fakeTicket = CreateFakeTicket("My Customer Ticket");
             fakeTicket.CustomerId = customerId;
 
-            _ticketsRepositoryMock.Setup(r => r.GetFilteredTicketsAsync(
-                It.IsAny<Expression<Func<Ticket, bool>>?>(),
-                It.IsAny<Func<IQueryable<Ticket>, IOrderedQueryable<Ticket>>>(),
+            _ticketsRepositoryMock.Setup(r => r.GetTicketsPagedAsync(
+                query.Role,
+                query.UserId,
+                query.Status,
+                query.Priority,
+                query.Search,
                 query.Page,
                 query.PageSize,
-                It.IsAny<CancellationToken>(),
-                It.IsAny<Expression<Func<Ticket, object>>>(),
-                It.IsAny<Expression<Func<Ticket, object>>>()))
-                .ReturnsAsync(new List<Ticket> { fakeTicket });
-
-            _ticketsRepositoryMock.Setup(r => r.CountFilteredTicketsAsync(
-                It.IsAny<Expression<Func<Ticket, bool>>?>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()))
-                .ReturnsAsync(1);
+                .ReturnsAsync((new List<Ticket> { fakeTicket }, 1));
 
             // Act
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -155,20 +150,18 @@ namespace TicketFlow.Application.Tests.Features.Tickets.Queries.GetTickets
                 Role = nameof(UserRole.SupportAgent)
             };
 
-            _ticketsRepositoryMock.Setup(r => r.GetFilteredTicketsAsync(
-                It.IsAny<Expression<Func<Ticket, bool>>?>(),
-                It.IsAny<Func<IQueryable<Ticket>, IOrderedQueryable<Ticket>>>(),
+            _ticketsRepositoryMock.Setup(r => r.GetTicketsPagedAsync(
+                query.Role,
+                query.UserId,
+                query.Status,
+                query.Priority,
+                query.Search,
                 query.Page,
                 query.PageSize,
-                It.IsAny<CancellationToken>(),
-                It.IsAny<Expression<Func<Ticket, object>>>(),
-                It.IsAny<Expression<Func<Ticket, object>>>()))
-                .ReturnsAsync(new List<Ticket>());
-
-            _ticketsRepositoryMock.Setup(r => r.CountFilteredTicketsAsync(
-                It.IsAny<Expression<Func<Ticket, bool>>?>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()))
-                .ReturnsAsync(0);
+                .ReturnsAsync((new List<Ticket>(), 0));
 
             // Act
             var result = await _handler.Handle(query, CancellationToken.None);
@@ -196,20 +189,18 @@ namespace TicketFlow.Application.Tests.Features.Tickets.Queries.GetTickets
 
             var matchingTicket = CreateFakeTicket("Database connection failure", TicketStatus.InProgress, TicketPriority.High);
 
-            _ticketsRepositoryMock.Setup(r => r.GetFilteredTicketsAsync(
-                It.IsAny<Expression<Func<Ticket, bool>>?>(),
-                It.IsAny<Func<IQueryable<Ticket>, IOrderedQueryable<Ticket>>>(),
+            _ticketsRepositoryMock.Setup(r => r.GetTicketsPagedAsync(
+                query.Role,
+                query.UserId,
+                query.Status,
+                query.Priority,
+                query.Search,
                 query.Page,
                 query.PageSize,
-                It.IsAny<CancellationToken>(),
-                It.IsAny<Expression<Func<Ticket, object>>>(),
-                It.IsAny<Expression<Func<Ticket, object>>>()))
-                .ReturnsAsync(new List<Ticket> { matchingTicket });
-
-            _ticketsRepositoryMock.Setup(r => r.CountFilteredTicketsAsync(
-                It.IsAny<Expression<Func<Ticket, bool>>?>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()))
-                .ReturnsAsync(1);
+                .ReturnsAsync((new List<Ticket> { matchingTicket }, 1));
 
             // Act
             var result = await _handler.Handle(query, CancellationToken.None);

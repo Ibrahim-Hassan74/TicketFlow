@@ -57,10 +57,9 @@ namespace TicketFlow.Application.Tests.Features.Activities.Queries.GetActivities
             await act.Should().ThrowAsync<NotFoundException>()
                 .WithMessage("Ticket not found or you do not have access.");
 
-            _ticketActivityRepositoryMock.Verify(r => r.GetFilteredAsync(
-                It.IsAny<Expression<Func<TicketActivity, bool>>>(),
-                It.IsAny<CancellationToken>(),
-                It.IsAny<Expression<Func<TicketActivity, object>>[]>()), Times.Never);
+            _ticketActivityRepositoryMock.Verify(r => r.GetActivitiesByTicketIdAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
@@ -105,11 +104,8 @@ namespace TicketFlow.Application.Tests.Features.Activities.Queries.GetActivities
             };
 
             _ticketActivityRepositoryMock
-                .Setup(r => r.GetFilteredAsync(
-                    It.IsAny<Expression<Func<TicketActivity, bool>>>(),
-                    It.IsAny<CancellationToken>(),
-                    It.IsAny<Expression<Func<TicketActivity, object>>[]>()))
-                .ReturnsAsync(new List<TicketActivity> { act2, act1 }); // Out of order list to test ordering
+                .Setup(r => r.GetActivitiesByTicketIdAsync(ticketId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<TicketActivity> { act1, act2 });
 
             // Act
             var result = (await _handler.Handle(query, CancellationToken.None)).ToList();
@@ -123,6 +119,10 @@ namespace TicketFlow.Application.Tests.Features.Activities.Queries.GetActivities
             result[1].Type.Should().Be(ActivityType.StatusChanged.ToString());
             result[1].OldValue.Should().Be("Open");
             result[1].NewValue.Should().Be("InProgress");
+
+            _ticketActivityRepositoryMock.Verify(r => r.GetActivitiesByTicketIdAsync(
+                ticketId,
+                It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }
