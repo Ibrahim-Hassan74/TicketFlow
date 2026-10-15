@@ -93,7 +93,7 @@ namespace TicketFlow.API.Controllers
         /// <include file='../Docs/TicketsDocs.xml' path='docs/members[@name="TicketsController"]/UpdateTicket/*' />
         [HttpPut("{id:guid}")]
         [Authorize(Roles = nameof(UserRole.Admin))]
-        [ProducesResponseType(typeof(TicketResponse), StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesProblem(StatusCodes.Status403Forbidden)]
         [ProducesProblem(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateTicket(Guid id, [FromBody] UpdateTicketRequest request)

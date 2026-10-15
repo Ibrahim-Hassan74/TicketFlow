@@ -18,8 +18,10 @@ using TicketFlow.Infrastructure.Persistence;
 
 namespace TicketFlow.API.StartupExtensions
 {
+    /// <include file='../Docs/ConfigureServicesDocs.xml' path='docs/members[@name="ConfigureServiceCollection"]/Class/*' />
     public static class ConfigureServiceCollection
     {
+        /// <include file='../Docs/ConfigureServicesDocs.xml' path='docs/members[@name="ConfigureServiceCollection"]/ConfigureServices/*' />
         public static IServiceCollection ConfigureServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddControllers();

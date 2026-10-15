@@ -3,86 +3,116 @@
   <members name="UsersController">
     <Class>
       <summary>
-        Controller responsible for user management operations including searching, retrieving, creating, and updating accounts.
-        Restricted to administrators only.
+        Controller responsible for administrative user management operations including searching, provisioning, updating, and querying user profiles.
       </summary>
+      <remarks>
+        All endpoints in this controller require authentication and the &lt;b&gt;Admin&lt;/b&gt; role.
+        All validation errors and exceptions conform to the RFC 7807 &lt;code&gt;ProblemDetails&lt;/code&gt; standard.
+      </remarks>
     </Class>
 
     <Constructor>
       <summary>
         Initializes a new instance of the <see cref="TicketFlow.API.Controllers.UsersController"/> class.
       </summary>
-      <param name="mediator">The MediatR mediator instance.</param>
+      <param name="mediator">The MediatR mediator instance used for dispatching user queries and commands.</param>
     </Constructor>
 
     <GetUsers>
       <summary>
-        Retrieves a paginated and filterable list of all registered users.
+        Retrieves a paginated and filterable list of all registered users in the system.
       </summary>
-      <param name="query">The search, role filter, and pagination query parameters.</param>
-      <returns>A paginated collection of user summary response DTOs.</returns>
-      <response code="200">Returns the paginated list of users.</response>
-      <response code="400">If query parameters are invalid.</response>
-      <response code="401">If the user is not authenticated.</response>
-      <response code="403">If the user is not an administrator.</response>
+      <remarks>
+        Restricted to users in the &lt;b&gt;Admin&lt;/b&gt; role.
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Role Filter:&lt;/b&gt; Optional filter by user role: &lt;code&gt;Admin&lt;/code&gt; (0), &lt;code&gt;SupportAgent&lt;/code&gt; (1), &lt;code&gt;Customer&lt;/code&gt; (2).&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Search:&lt;/b&gt; Optional substring search matching against user display name or email address.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Pagination:&lt;/b&gt; &lt;code&gt;Page&lt;/code&gt; &amp;gt;= 1 (defaults to 1); &lt;code&gt;PageSize&lt;/code&gt; between 1 and 100 (defaults to 10).&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+      </remarks>
+      <param name="query">The query parameters including pagination options, optional role filter, and search keyword.</param>
+      <returns>A paginated collection of user summary DTOs, total records count, and pagination metadata.</returns>
+      <response code="200">Returns the paginated list of users matching the filter criteria.</response>
+      <response code="400">If pagination or query parameters fail validation (e.g., page &amp;lt; 1, pageSize outside 1..100, invalid role enum).</response>
+      <response code="401">If the request lacks a valid Bearer token.</response>
+      <response code="403">If the caller does not have the Admin role.</response>
     </GetUsers>
 
     <GetUserById>
       <summary>
-        Retrieves detailed information for a specific user by their unique identifier.
+        Retrieves the profile details of a specific user by their unique identifier.
       </summary>
-      <param name="id">The unique identifier (GUID) of the user.</param>
-      <returns>The user details if found.</returns>
-      <response code="200">Returns the user details.</response>
-      <response code="401">If the user is not authenticated.</response>
-      <response code="403">If the user is not an administrator.</response>
-      <response code="404">If the user with the specified ID does not exist.</response>
+      <remarks>
+        Restricted to users in the &lt;b&gt;Admin&lt;/b&gt; role.
+        Returns the user's ID, email address, display name, assigned role, active status, and account creation timestamp.
+      </remarks>
+      <param name="id">The unique identifier (GUID) of the target user.</param>
+      <returns>The user profile response DTO.</returns>
+      <response code="200">Returns the detailed profile of the requested user.</response>
+      <response code="400">If the provided ID is not a valid GUID format.</response>
+      <response code="401">If the request lacks a valid Bearer token.</response>
+      <response code="403">If the caller does not have the Admin role.</response>
+      <response code="404">If a user with the specified ID does not exist.</response>
     </GetUserById>
 
     <CreateUser>
       <summary>
-        Creates a new user account with a specified role.
+        Creates and provisions a new user account with a specified role.
       </summary>
       <remarks>
-        Administrators can provision Admin, SupportAgent, or Customer accounts directly.
+        Restricted to users in the &lt;b&gt;Admin&lt;/b&gt; role.
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;Administrators can provision &lt;b&gt;Admin&lt;/b&gt;, &lt;b&gt;SupportAgent&lt;/b&gt;, or &lt;b&gt;Customer&lt;/b&gt; accounts.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;code&gt;EmailConfirmed&lt;/code&gt; is automatically set to &lt;code&gt;true&lt;/code&gt; for admin-created accounts.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Enforces Identity password complexity rules and uniqueness of email address.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Response includes a &lt;code&gt;Location&lt;/code&gt; header pointing to &lt;code&gt;GET /api/v1/users/{id}&lt;/code&gt;.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
       </remarks>
-      <param name="command">User creation payload containing email, displayName, initial password, and role.</param>
-      <returns>The created user details response DTO.</returns>
-      <response code="200">User account created successfully.</response>
-      <response code="400">If the input payload fails validation or identity password rules.</response>
-      <response code="401">If the user is not authenticated.</response>
-      <response code="403">If the user is not an administrator.</response>
-      <response code="409">If an account with the specified email already exists.</response>
+      <param name="command">User creation command containing email, display name, temporary password, and assigned role.</param>
+      <returns>The newly created user profile response DTO.</returns>
+      <response code="201">User account was created successfully. Location header contains resource URI.</response>
+      <response code="400">If input payload fails validation (e.g., invalid email, password under 8 characters, or unrecognized role).</response>
+      <response code="401">If the request lacks a valid Bearer token.</response>
+      <response code="403">If the caller does not have the Admin role.</response>
+      <response code="409">If an account with the specified email address already exists.</response>
     </CreateUser>
 
     <UpdateUser>
       <summary>
-        Updates the profile and active status of an existing user.
+        Updates the profile information and active status of an existing user account.
       </summary>
+      <remarks>
+        Restricted to users in the &lt;b&gt;Admin&lt;/b&gt; role.
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;Allows updating the user's &lt;code&gt;DisplayName&lt;/code&gt; (up to 100 characters).&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Allows enabling or disabling the account by toggling &lt;code&gt;IsActive&lt;/code&gt; (soft deletion). Deactivated users cannot log in.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+      </remarks>
       <param name="id">The unique identifier (GUID) of the user to update.</param>
-      <param name="request">The updated user details (DisplayName, IsActive status).</param>
-      <returns>The updated user details response DTO.</returns>
-      <response code="200">User was successfully updated.</response>
-      <response code="400">If update payload is invalid or identity update fails.</response>
-      <response code="401">If the user is not authenticated.</response>
-      <response code="403">If the user is not an administrator.</response>
-      <response code="404">If the user with the specified ID does not exist.</response>
+      <param name="request">The update payload containing the new display name and desired active status.</param>
+      <returns>The updated user profile response DTO.</returns>
+      <response code="200">The user profile was updated successfully.</response>
+      <response code="400">If the update payload fails validation (e.g., blank display name or name exceeding 100 characters).</response>
+      <response code="401">If the request lacks a valid Bearer token.</response>
+      <response code="403">If the caller does not have the Admin role.</response>
+      <response code="404">If a user with the specified ID does not exist.</response>
     </UpdateUser>
 
     <GetAgents>
       <summary>
-        Retrieves a paginated list of active Support Agents.
+        Retrieves a paginated list of active Support Agents for ticket assignment.
       </summary>
       <remarks>
-        Commonly used by ticket assignment dropdowns and workload assignment interfaces.
+        Restricted to users in the &lt;b&gt;Admin&lt;/b&gt; role.
+        Returns active users holding the &lt;code&gt;SupportAgent&lt;/code&gt; role, suitable for populating agent assignment dropdowns and managing workload distribution.
       </remarks>
-      <param name="pageNumber">The 1-based page index (defaults to 1).</param>
-      <param name="pageSize">The number of agents per page (defaults to 10).</param>
-      <returns>A paginated list of support agent profiles.</returns>
-      <response code="200">Returns the paginated list of agents.</response>
-      <response code="400">If pagination parameters are invalid.</response>
-      <response code="401">If the user is not authenticated.</response>
-      <response code="403">If the user is not an administrator.</response>
+      <param name="pageNumber">The 1-based page index (defaults to 1, must be &amp;gt;= 1).</param>
+      <param name="pageSize">The number of agents per page (defaults to 10, between 1 and 100).</param>
+      <returns>A paginated collection of support agent profiles and pagination metadata.</returns>
+      <response code="200">Returns the paginated list of support agents.</response>
+      <response code="400">If pagination parameters fail validation (e.g., pageNumber &amp;lt; 1, pageSize outside 1..100).</response>
+      <response code="401">If the request lacks a valid Bearer token.</response>
+      <response code="403">If the caller does not have the Admin role.</response>
     </GetAgents>
   </members>
 </docs>

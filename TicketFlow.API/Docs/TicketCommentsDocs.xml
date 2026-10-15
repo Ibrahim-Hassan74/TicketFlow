@@ -3,48 +3,62 @@
   <members name="TicketCommentsController">
     <Class>
       <summary>
-        Controller responsible for managing communication and comments on support tickets.
+        Controller responsible for managing communication, notes, and discussion comments on support tickets.
       </summary>
+      <remarks>
+        Route prefix: &lt;code&gt;api/v1/tickets/{ticketId}/comments&lt;/code&gt;.
+        All comment endpoints require authentication and enforce ticket-level ownership access control.
+      </remarks>
     </Class>
 
     <Constructor>
       <summary>
         Initializes a new instance of the <see cref="TicketFlow.API.Controllers.TicketCommentsController"/> class.
       </summary>
-      <param name="mediator">The MediatR mediator instance.</param>
-      <param name="currentUserService">The service used to obtain the current authenticated user's ID and role.</param>
+      <param name="mediator">The MediatR mediator instance used for dispatching comment queries and commands.</param>
+      <param name="currentUserService">The service used to obtain the current authenticated user's ID and role from JWT claims.</param>
     </Constructor>
 
     <GetComments>
       <summary>
-        Retrieves a chronological list of comments for a specific support ticket.
+        Retrieves the chronological discussion thread of comments for a specific support ticket.
       </summary>
       <remarks>
-        Access is restricted using ticket ownership rules:
-        Admins can view comments on any ticket; Agents can view comments on assigned tickets; Customers can view comments on their own tickets.
+        Access is governed by ticket ownership rules:
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Admin:&lt;/b&gt; Can view comments on any ticket in the system.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;SupportAgent:&lt;/b&gt; Can view comments on tickets assigned to them.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Customer:&lt;/b&gt; Can view comments on tickets they created.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+        Comments are returned ordered chronologically by creation timestamp (&lt;code&gt;CreatedAt&lt;/code&gt; ascending).
       </remarks>
-      <param name="ticketId">The unique identifier (GUID) of the ticket.</param>
-      <returns>A list of comment response DTOs including author display names and timestamps.</returns>
-      <response code="200">Returns the comments for the ticket.</response>
-      <response code="401">If the user is not authenticated.</response>
-      <response code="404">If the ticket does not exist or caller lacks access permission.</response>
+      <param name="ticketId">The unique identifier (GUID) of the parent ticket.</param>
+      <returns>A list of comment response DTOs including author display name, comment content, and creation timestamp.</returns>
+      <response code="200">Returns the chronological list of comments for the ticket.</response>
+      <response code="400">If the provided ticket ID is not a valid GUID format.</response>
+      <response code="401">If the request lacks a valid Bearer token.</response>
+      <response code="404">If the ticket does not exist or the caller lacks permission to view it.</response>
     </GetComments>
 
     <AddComment>
       <summary>
-        Adds a new comment to a support ticket.
+        Posts a new comment to a support ticket thread.
       </summary>
       <remarks>
-        Only users with access to the ticket (Admin, Assigned Agent, or Ticket Owner Customer) can add comments.
-        Adding a comment automatically logs a &lt;code&gt;CommentAdded&lt;/code&gt; activity event.
+        Authorized for users with access to the ticket:
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;Administrators, the assigned Support Agent, or the ticket owner Customer.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Content Limits:&lt;/b&gt; Content cannot be blank and must not exceed 2000 characters.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Posting a comment automatically logs a &lt;code&gt;CommentAdded&lt;/code&gt; activity event in the ticket timeline.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
       </remarks>
-      <param name="ticketId">The unique identifier (GUID) of the ticket.</param>
-      <param name="request">The comment content payload.</param>
-      <returns>A confirmation response indicating the comment was added.</returns>
-      <response code="200">Comment was successfully posted.</response>
-      <response code="400">If the comment content is empty or exceeds length limits.</response>
-      <response code="401">If the user is not authenticated.</response>
-      <response code="404">If the ticket does not exist or caller lacks access permission.</response>
+      <param name="ticketId">The unique identifier (GUID) of the parent ticket.</param>
+      <param name="request">The comment payload containing the text content to post.</param>
+      <returns>A confirmation response indicating the comment was added successfully.</returns>
+      <response code="200">The comment was posted successfully.</response>
+      <response code="400">If the comment payload fails validation (e.g., blank content or text exceeding 2000 characters).</response>
+      <response code="401">If the request lacks a valid Bearer token.</response>
+      <response code="404">If the ticket does not exist or the caller lacks permission to post comments to it.</response>
     </AddComment>
   </members>
 </docs>
