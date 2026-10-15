@@ -1,18 +1,22 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Dapper;
 using TicketFlow.Application.Common.Interfaces;
 using TicketFlow.Application.Common.Models;
 using TicketFlow.Application.Features.Users.DTOs;
 using TicketFlow.Domain.Enums;
+using TicketFlow.Infrastructure.Persistence.Models;
 
 namespace TicketFlow.Infrastructure.Persistence.Repository
 {
+    /// <summary>
+    /// High-performance Dapper repository calling PostgreSQL stored functions for user queries.
+    /// </summary>
     public class UserRepository : IUserRepository
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ISqlConnectionFactory _connectionFactory;
 
-        public UserRepository(ApplicationDbContext context)
+        public UserRepository(ISqlConnectionFactory connectionFactory)
         {
-            _context = context;
+            _connectionFactory = connectionFactory;
         }
 
         public async Task<PaginatedResponse<UserResponse>> GetUsersAsync(
@@ -22,47 +26,29 @@ namespace TicketFlow.Infrastructure.Persistence.Repository
             string? search,
             CancellationToken ct = default)
         {
-            if (page < 1) page = 1;
-            if (pageSize < 1) pageSize = 10;
-            if (pageSize > 100) pageSize = 100;
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = "SELECT * FROM sp_get_users(@Role, @Search, @Page, @PageSize);";
 
-            var query = from u in _context.Users.AsNoTracking()
-                        join ur in _context.UserRoles on u.Id equals ur.UserId into urGroup
-                        from ur in urGroup.DefaultIfEmpty()
-                        join r in _context.Roles on ur.RoleId equals r.Id into rGroup
-                        from r in rGroup.DefaultIfEmpty()
-                        select new { User = u, Role = r != null ? r.Name : string.Empty };
-
-            if (role.HasValue)
-            {
-                var roleName = role.Value.ToString();
-                query = query.Where(x => x.Role == roleName);
-            }
-
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                var searchLower = search.Trim().ToLower();
-                query = query.Where(x =>
-                    x.User.DisplayName.ToLower().Contains(searchLower) ||
-                    (x.User.Email != null && x.User.Email.ToLower().Contains(searchLower)));
-            }
-
-            var totalCount = await query.CountAsync(ct);
-
-            var items = await query
-                .OrderBy(x => x.User.DisplayName)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(x => new UserResponse
+            var rows = (await connection.QueryAsync<UserRow>(
+                new CommandDefinition(sql, new
                 {
-                    Id = x.User.Id,
-                    Email = x.User.Email ?? string.Empty,
-                    DisplayName = x.User.DisplayName,
-                    Role = x.Role,
-                    IsActive = !x.User.IsDeleted,
-                    CreatedAt = x.User.CreatedAt
-                })
-                .ToListAsync(ct);
+                    Role = role?.ToString(),
+                    Search = string.IsNullOrWhiteSpace(search) ? null : search.Trim(),
+                    Page = page,
+                    PageSize = pageSize
+                }, cancellationToken: ct))).ToList();
+
+            var totalCount = rows.Count > 0 ? (int)rows[0].TotalCount : 0;
+
+            var items = rows.Select(r => new UserResponse
+            {
+                Id = r.Id,
+                Email = r.Email,
+                DisplayName = r.DisplayName,
+                Role = r.Role,
+                IsActive = r.IsActive,
+                CreatedAt = r.CreatedAt
+            }).ToList();
 
             return new PaginatedResponse<UserResponse>
             {
@@ -75,23 +61,23 @@ namespace TicketFlow.Infrastructure.Persistence.Repository
 
         public async Task<UserResponse?> GetByIdAsync(Guid id, CancellationToken ct = default)
         {
-            var query = from u in _context.Users.AsNoTracking()
-                        where u.Id == id
-                        join ur in _context.UserRoles on u.Id equals ur.UserId into urGroup
-                        from ur in urGroup.DefaultIfEmpty()
-                        join r in _context.Roles on ur.RoleId equals r.Id into rGroup
-                        from r in rGroup.DefaultIfEmpty()
-                        select new UserResponse
-                        {
-                            Id = u.Id,
-                            Email = u.Email ?? string.Empty,
-                            DisplayName = u.DisplayName,
-                            Role = r != null ? r.Name : string.Empty,
-                            IsActive = !u.IsDeleted,
-                            CreatedAt = u.CreatedAt
-                        };
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = @"
+                SELECT 
+                    u.""Id"",
+                    COALESCE(u.""Email"", '') AS ""Email"",
+                    u.""DisplayName"",
+                    COALESCE(r.""Name"", '') AS ""Role"",
+                    (NOT u.""IsDeleted"") AS ""IsActive"",
+                    u.""CreatedAt""
+                FROM ""AspNetUsers"" u
+                LEFT JOIN ""AspNetUserRoles"" ur ON ur.""UserId"" = u.""Id""
+                LEFT JOIN ""AspNetRoles"" r ON r.""Id"" = ur.""RoleId""
+                WHERE u.""Id"" = @Id AND u.""IsDeleted"" = FALSE
+                LIMIT 1;";
 
-            return await query.FirstOrDefaultAsync(ct);
+            return await connection.QueryFirstOrDefaultAsync<UserResponse>(
+                new CommandDefinition(sql, new { Id = id }, cancellationToken: ct));
         }
 
         public async Task<PaginatedResponse<UserResponse>> GetAgentsAsync(
@@ -103,30 +89,27 @@ namespace TicketFlow.Infrastructure.Persistence.Repository
             if (pageSize < 1) pageSize = 10;
             if (pageSize > 100) pageSize = 100;
 
-            var agentRoleName = UserRole.SupportAgent.ToString();
+            using var connection = _connectionFactory.CreateConnection();
+            const string sql = "SELECT * FROM sp_get_agents(@Page, @PageSize);";
 
-            var query = from u in _context.Users.AsNoTracking()
-                        where !u.IsDeleted
-                        join ur in _context.UserRoles on u.Id equals ur.UserId
-                        join r in _context.Roles on ur.RoleId equals r.Id
-                        where r.Name == agentRoleName
-                        select new UserResponse
-                        {
-                            Id = u.Id,
-                            Email = u.Email ?? string.Empty,
-                            DisplayName = u.DisplayName,
-                            Role = agentRoleName,
-                            IsActive = !u.IsDeleted,
-                            CreatedAt = u.CreatedAt
-                        };
+            var rows = (await connection.QueryAsync<UserRow>(
+                new CommandDefinition(sql, new
+                {
+                    Page = pageNumber,
+                    PageSize = pageSize
+                }, cancellationToken: ct))).ToList();
 
-            var totalCount = await query.CountAsync(ct);
+            var totalCount = rows.Count > 0 ? (int)rows[0].TotalCount : 0;
 
-            var items = await query
-                .OrderBy(u => u.CreatedAt)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync(ct);
+            var items = rows.Select(r => new UserResponse
+            {
+                Id = r.Id,
+                Email = r.Email,
+                DisplayName = r.DisplayName,
+                Role = r.Role,
+                IsActive = r.IsActive,
+                CreatedAt = r.CreatedAt
+            }).ToList();
 
             return new PaginatedResponse<UserResponse>
             {

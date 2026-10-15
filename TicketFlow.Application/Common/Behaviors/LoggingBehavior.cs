@@ -23,7 +23,7 @@ namespace TicketFlow.Application.Common.Behaviors
             var userId = _currentUserService.UserId;
             var role = _currentUserService.Role ?? "Unauthenticated";
 
-            _logger.LogInformation("SupportTicket Request: Starting {RequestName} [User: {UserId} | Role: {Role}]", requestName, userId, role);
+            _logger.LogInformation("TicketFlow Request: Starting {RequestName} [User: {UserId} | Role: {Role}]", requestName, userId, role);
 
             var timer = new Stopwatch();
 
@@ -37,12 +37,12 @@ namespace TicketFlow.Application.Common.Behaviors
 
             if (timeTaken > 500)
             {
-                _logger.LogWarning("SupportTicket Long Running Request: {RequestName} took {TimeTaken}ms. [User: {UserId}]",
+                _logger.LogWarning("TicketFlow Long Running Request: {RequestName} took {TimeTaken}ms. [User: {UserId}]",
                     requestName, timeTaken, userId);
             }
             else
             {
-                _logger.LogInformation("SupportTicket Request: Completed {RequestName} in {TimeTaken}ms",
+                _logger.LogInformation("TicketFlow Request: Completed {RequestName} in {TimeTaken}ms",
                     requestName, timeTaken);
             }
 
