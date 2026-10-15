@@ -83,7 +83,7 @@ namespace TicketFlow.API.StartupExtensions
 
             services.AddDbContext<ApplicationDbContext>(options =>
             {
-                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
+                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
             });
 
             services.AddIdentity<ApplicationUser, ApplicationRole>(options =>

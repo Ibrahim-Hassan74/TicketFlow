@@ -52,7 +52,7 @@ namespace TicketFlow.Infrastructure.Persistence.Configuration
 
             builder.HasIndex(t => t.AssignedAgentId)
                 .HasDatabaseName("IX_Tickets_AssignedAgentId")
-                .HasFilter("[AssignedAgentId] IS NOT NULL");
+                .HasFilter("\"AssignedAgentId\" IS NOT NULL");
 
             builder.HasIndex(t => t.Status)
                 .HasDatabaseName("IX_Tickets_Status");

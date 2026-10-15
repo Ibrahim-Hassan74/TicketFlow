@@ -43,7 +43,7 @@ namespace TicketFlow.Infrastructure.Persistence.Configuration
             // Check constraint: duration must be between 1 and 1440 minutes (24 hours)
             builder.ToTable(t => t.HasCheckConstraint(
                 "CK_TimeEntries_DurationMinutes",
-                "[DurationMinutes] > 0 AND [DurationMinutes] <= 1440"));
+                "\"DurationMinutes\" > 0 AND \"DurationMinutes\" <= 1440"));
         }
     }
 }
