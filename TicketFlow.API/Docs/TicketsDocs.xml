@@ -3,129 +3,154 @@
   <members name="TicketsController">
     <Class>
       <summary>
-        Controller responsible for managing support tickets.
-        Provides endpoints for creating, retrieving, updating, and assigning tickets.
-        Uses role-based logic to isolate data appropriately (Admin, SupportAgent, Customer).
+        Controller responsible for managing the lifecycle of support tickets.
       </summary>
+      <remarks>
+        Provides endpoints for creating, querying, updating, assigning, and transitioning support tickets.
+        Enforces strict role-based data isolation:
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Admin:&lt;/b&gt; Unrestricted global visibility and administrative control.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;SupportAgent:&lt;/b&gt; Scoped strictly to assigned tickets.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Customer:&lt;/b&gt; Scoped strictly to tickets they created.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+        All error responses follow the RFC 7807 &lt;code&gt;ProblemDetails&lt;/code&gt; specification.
+      </remarks>
     </Class>
 
     <Constructor>
       <summary>
         Initializes a new instance of the <see cref="TicketFlow.API.Controllers.TicketsController"/> class.
       </summary>
-      <param name="mediator">The MediatR mediator instance for dispatching queries and commands.</param>
-      <param name="currentUserService">The service used to obtain the current authenticated user's ID and role.</param>
+      <param name="mediator">The MediatR mediator instance used for dispatching queries and commands.</param>
+      <param name="currentUserService">The service used to resolve authenticated user identity, ID, and role from JWT claims.</param>
     </Constructor>
 
     <GetTickets>
       <summary>
-        Retrieves a paginated list of support tickets with optional filtering and sorting.
+        Retrieves a paginated and filterable list of support tickets.
       </summary>
       <remarks>
-        Results are scoped automatically based on the authenticated user's role:
+        Ticket visibility is automatically filtered based on the caller's role:
         &lt;list type="bullet"&gt;
-          &lt;item&gt;&lt;description&gt;&lt;b&gt;Admin:&lt;/b&gt; Sees all tickets across the system.&lt;/description&gt;&lt;/item&gt;
-          &lt;item&gt;&lt;description&gt;&lt;b&gt;SupportAgent:&lt;/b&gt; Sees only tickets assigned to them.&lt;/description&gt;&lt;/item&gt;
-          &lt;item&gt;&lt;description&gt;&lt;b&gt;Customer:&lt;/b&gt; Sees only tickets that they created.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Admin:&lt;/b&gt; Can view all tickets in the system.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;SupportAgent:&lt;/b&gt; Can only view tickets assigned to them.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Customer:&lt;/b&gt; Can only view tickets they personally submitted.&lt;/description&gt;&lt;/item&gt;
         &lt;/list&gt;
+        &lt;para&gt;&lt;b&gt;Filtering &amp;amp; Search:&lt;/b&gt; Supports filtering by &lt;code&gt;Status&lt;/code&gt; (Open, InProgress, Resolved, Closed), &lt;code&gt;Priority&lt;/code&gt; (Low, Medium, High, Critical), and a case-insensitive substring search across ticket titles and descriptions.&lt;/para&gt;
+        &lt;para&gt;&lt;b&gt;Sorting:&lt;/b&gt; Supports sorting by &lt;code&gt;CreatedAt&lt;/code&gt;, &lt;code&gt;UpdatedAt&lt;/code&gt;, &lt;code&gt;Priority&lt;/code&gt;, or &lt;code&gt;Status&lt;/code&gt; in &lt;code&gt;Ascending&lt;/code&gt; or &lt;code&gt;Descending&lt;/code&gt; order.&lt;/para&gt;
+        &lt;para&gt;&lt;b&gt;Pagination:&lt;/b&gt; &lt;code&gt;Page&lt;/code&gt; must be &amp;gt;= 1 (defaults to 1); &lt;code&gt;PageSize&lt;/code&gt; must be between 1 and 100 (defaults to 10).&lt;/para&gt;
       </remarks>
-      <param name="request">Pagination, filtering (Status, Priority, Search), and sorting parameters.</param>
-      <returns>A paginated response containing ticket summary DTOs and pagination metadata.</returns>
-      <response code="200">Returns the paginated list of tickets matching the query filters.</response>
-      <response code="400">If query parameters (such as page or pageSize) are out of valid range.</response>
-      <response code="401">If the user is not authenticated.</response>
+      <param name="request">The query parameters including filtering, sorting, and pagination options.</param>
+      <returns>A paginated response containing ticket summary records, total item count, and pagination metadata.</returns>
+      <response code="200">Returns the paginated list of tickets matching the specified filters.</response>
+      <response code="400">If query parameters fail validation (e.g., page &amp;lt; 1, pageSize outside 1..100, or invalid enum value).</response>
+      <response code="401">If the request lacks a valid Bearer token or the token has expired.</response>
     </GetTickets>
 
     <GetTicketById>
       <summary>
-        Retrieves a specific support ticket by its unique identifier.
+        Retrieves a single support ticket by its unique identifier.
       </summary>
       <remarks>
-        Access is restricted based on ownership and role:
+        Access is enforced with IDOR (Insecure Direct Object Reference) prevention:
         &lt;list type="bullet"&gt;
-          &lt;item&gt;&lt;description&gt;&lt;b&gt;Admin:&lt;/b&gt; Can access any ticket.&lt;/description&gt;&lt;/item&gt;
-          &lt;item&gt;&lt;description&gt;&lt;b&gt;SupportAgent:&lt;/b&gt; Can only access tickets assigned to them.&lt;/description&gt;&lt;/item&gt;
-          &lt;item&gt;&lt;description&gt;&lt;b&gt;Customer:&lt;/b&gt; Can only access tickets they submitted.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Admin:&lt;/b&gt; Authorized to view any ticket.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;SupportAgent:&lt;/b&gt; Authorized only if assigned to this ticket.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Customer:&lt;/b&gt; Authorized only if they created this ticket.&lt;/description&gt;&lt;/item&gt;
         &lt;/list&gt;
-        If the ticket is not found or the caller lacks permission, a 404 Not Found response is returned for IDOR protection.
+        If the ticket does not exist or the caller lacks permission, a &lt;b&gt;404 Not Found&lt;/b&gt; is returned to prevent resource enumeration.
       </remarks>
       <param name="id">The unique identifier (GUID) of the ticket.</param>
-      <returns>The detailed ticket information including customer and assigned agent display names.</returns>
-      <response code="200">Returns the ticket details.</response>
-      <response code="401">If the user is not authenticated.</response>
-      <response code="404">If the ticket does not exist or the user is not authorized to view it.</response>
+      <returns>The detailed ticket information including customer and assigned agent display names, timestamps, and current state.</returns>
+      <response code="200">Returns the full ticket details.</response>
+      <response code="400">If the provided ticket ID is not a valid GUID format.</response>
+      <response code="401">If the request lacks a valid Bearer token.</response>
+      <response code="404">If the ticket was not found or the caller is not authorized to access it.</response>
     </GetTicketById>
 
     <CreateTicket>
       <summary>
-        Creates a new support ticket.
+        Submits and creates a new support ticket.
       </summary>
       <remarks>
-        Only users with the &lt;b&gt;Customer&lt;/b&gt; role can create tickets.
-        An activity record with type &lt;code&gt;Created&lt;/code&gt; is automatically recorded.
+        Restricted to users in the &lt;b&gt;Customer&lt;/b&gt; role.
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;The creator ID is automatically extracted from authenticated JWT claims.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Initial status is automatically set to &lt;code&gt;Open&lt;/code&gt;.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;A &lt;code&gt;Created&lt;/code&gt; activity event is recorded in the ticket audit trail.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;The response includes a &lt;code&gt;Location&lt;/code&gt; header pointing to the newly created resource URI.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
       </remarks>
-      <param name="request">The ticket details including title, description, and requested priority.</param>
-      <returns>The newly created ticket response DTO.</returns>
-      <response code="200">The ticket was successfully created.</response>
-      <response code="400">If the request fails validation (e.g. missing title, description).</response>
+      <param name="request">The creation payload containing title (max 200 chars), description (max 4000 chars), and requested priority.</param>
+      <returns>The newly created ticket response with generated ID and timestamps.</returns>
+      <response code="201">The ticket was created successfully. The response body contains the ticket and the Location header has the resource URI.</response>
+      <response code="400">If the payload fails validation (e.g., missing title, description exceeding 4000 characters, invalid priority enum).</response>
       <response code="401">If the user is not authenticated.</response>
-      <response code="403">If the caller does not have the Customer role.</response>
+      <response code="403">If the authenticated user does not have the Customer role.</response>
     </CreateTicket>
 
     <UpdateTicket>
       <summary>
-        Updates the core details (Title, Description) of an existing ticket.
+        Updates the core content (Title and Description) of an existing ticket.
       </summary>
       <remarks>
-        Only users with the &lt;b&gt;Admin&lt;/b&gt; role are authorized to perform this update.
+        Restricted exclusively to users in the &lt;b&gt;Admin&lt;/b&gt; role.
+        Updates the ticket's &lt;code&gt;Title&lt;/code&gt;, &lt;code&gt;Description&lt;/code&gt;, and refreshes the &lt;code&gt;UpdatedAt&lt;/code&gt; timestamp.
       </remarks>
-      <param name="id">The unique identifier (GUID) of the ticket.</param>
-      <param name="request">The updated title and description.</param>
-      <returns>A success response confirmation.</returns>
-      <response code="200">The ticket details were successfully updated.</response>
-      <response code="400">If the update request is invalid.</response>
+      <param name="id">The unique identifier (GUID) of the ticket to update.</param>
+      <param name="request">The update payload containing the new title (max 200 chars) and description (max 4000 chars).</param>
+      <returns>No content on success.</returns>
+      <response code="204">The ticket was updated successfully.</response>
+      <response code="400">If the update payload fails validation.</response>
       <response code="401">If the user is not authenticated.</response>
-      <response code="403">If the caller is not an administrator.</response>
-      <response code="404">If the ticket does not exist.</response>
+      <response code="403">If the caller does not have the Admin role.</response>
+      <response code="404">If the ticket with the specified ID does not exist.</response>
     </UpdateTicket>
 
     <UpdateTicketStatus>
       <summary>
-        Updates the status of a ticket according to business role rules.
+        Transitions a ticket to a new status according to business state machine rules.
       </summary>
       <remarks>
-        Role-based transition permissions:
+        Allowed status transitions are governed by both state machine and role permissions:
         &lt;list type="bullet"&gt;
-          &lt;item&gt;&lt;description&gt;&lt;b&gt;Admin:&lt;/b&gt; Can set any valid status.&lt;/description&gt;&lt;/item&gt;
-          &lt;item&gt;&lt;description&gt;&lt;b&gt;SupportAgent:&lt;/b&gt; Can resolve assigned tickets.&lt;/description&gt;&lt;/item&gt;
-          &lt;item&gt;&lt;description&gt;&lt;b&gt;Customer:&lt;/b&gt; Can close or reopen their own tickets.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Admin:&lt;/b&gt; Can transition to any valid status (&lt;code&gt;Open&lt;/code&gt;, &lt;code&gt;InProgress&lt;/code&gt;, &lt;code&gt;Resolved&lt;/code&gt;, &lt;code&gt;Closed&lt;/code&gt;).&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;SupportAgent:&lt;/b&gt; Can transition assigned tickets between &lt;code&gt;Open&lt;/code&gt;, &lt;code&gt;InProgress&lt;/code&gt;, and &lt;code&gt;Resolved&lt;/code&gt;. Support agents cannot close tickets.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Customer:&lt;/b&gt; Can close their own tickets (&lt;code&gt;Closed&lt;/code&gt;) or reopen a closed ticket (&lt;code&gt;Open&lt;/code&gt;). Cannot set &lt;code&gt;InProgress&lt;/code&gt; or &lt;code&gt;Resolved&lt;/code&gt;.&lt;/description&gt;&lt;/item&gt;
         &lt;/list&gt;
-        Enforces state transitions: Open tickets must be InProgress before resolving; Closed tickets can only be reopened.
+        &lt;b&gt;State Machine Invariants:&lt;/b&gt;
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;An &lt;code&gt;Open&lt;/code&gt; ticket cannot be directly resolved; it must move to &lt;code&gt;InProgress&lt;/code&gt; first.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;A &lt;code&gt;Closed&lt;/code&gt; ticket can only be transitioned back to &lt;code&gt;Open&lt;/code&gt; (reopened).&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+        Automatically logs a &lt;code&gt;StatusChanged&lt;/code&gt; or &lt;code&gt;Closed&lt;/code&gt; activity event with previous and new status values.
       </remarks>
       <param name="id">The unique identifier (GUID) of the ticket.</param>
-      <param name="request">The new status to set.</param>
-      <returns>An empty success response.</returns>
-      <response code="200">The status was updated and an activity log entry was created.</response>
-      <response code="400">If the transition is forbidden by role or state machine rules.</response>
+      <param name="request">The status payload containing the target status enum value.</param>
+      <returns>No content on success.</returns>
+      <response code="204">The status was updated and an activity audit entry was recorded.</response>
+      <response code="400">If the transition violates role permissions or state machine rules.</response>
       <response code="401">If the user is not authenticated.</response>
-      <response code="404">If the ticket does not exist or user is unauthorized.</response>
+      <response code="404">If the ticket does not exist or the caller lacks permission to access it.</response>
     </UpdateTicketStatus>
 
     <UpdateTicketPriority>
       <summary>
-        Updates the priority level of a ticket.
+        Updates the priority level of an existing ticket.
       </summary>
       <remarks>
-        Only users with the &lt;b&gt;Admin&lt;/b&gt; role can change ticket priority.
+        Restricted exclusively to users in the &lt;b&gt;Admin&lt;/b&gt; role.
+        Valid priorities: &lt;code&gt;Low&lt;/code&gt; (0), &lt;code&gt;Medium&lt;/code&gt; (1), &lt;code&gt;High&lt;/code&gt; (2), &lt;code&gt;Critical&lt;/code&gt; (3).
+        Automatically logs a &lt;code&gt;PriorityChanged&lt;/code&gt; activity event with previous and new priority values.
       </remarks>
       <param name="id">The unique identifier (GUID) of the ticket.</param>
-      <param name="request">The new priority (Low, Medium, High, Critical).</param>
-      <returns>An empty success response.</returns>
-      <response code="200">The priority was updated successfully.</response>
-      <response code="400">If the priority value is invalid.</response>
+      <param name="request">The priority payload containing the new priority enum value.</param>
+      <returns>No content on success.</returns>
+      <response code="204">The priority was updated successfully.</response>
+      <response code="400">If the provided priority value is not a valid enum value.</response>
       <response code="401">If the user is not authenticated.</response>
-      <response code="403">If the caller is not an administrator.</response>
-      <response code="404">If the ticket does not exist.</response>
+      <response code="403">If the caller does not have the Admin role.</response>
+      <response code="404">If the ticket with the specified ID does not exist.</response>
     </UpdateTicketPriority>
 
     <AssignAgent>
@@ -133,17 +158,21 @@
         Assigns or reassigns a Support Agent to a ticket.
       </summary>
       <remarks>
-        Only users with the &lt;b&gt;Admin&lt;/b&gt; role can assign agents.
-        Tickets that are already closed cannot be assigned to an agent.
+        Restricted exclusively to users in the &lt;b&gt;Admin&lt;/b&gt; role.
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;The specified agent must exist and have the &lt;code&gt;SupportAgent&lt;/code&gt; role.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Tickets in a &lt;code&gt;Closed&lt;/code&gt; state cannot be assigned to an agent.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;An &lt;code&gt;AgentAssigned&lt;/code&gt; activity event is automatically recorded in the ticket timeline.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
       </remarks>
       <param name="id">The unique identifier (GUID) of the ticket.</param>
-      <param name="request">The ID of the Support Agent.</param>
-      <returns>An empty success response.</returns>
-      <response code="200">The agent was assigned successfully and an activity audit entry was recorded.</response>
-      <response code="400">If the ticket is closed or the user is invalid.</response>
+      <param name="request">The assignment payload containing the Support Agent's unique GUID.</param>
+      <returns>No content on success.</returns>
+      <response code="204">The agent was assigned successfully and the audit log was updated.</response>
+      <response code="400">If the ticket is closed or the assigned user is not a Support Agent.</response>
       <response code="401">If the user is not authenticated.</response>
-      <response code="403">If the caller is not an administrator.</response>
-      <response code="404">If the ticket does not exist.</response>
+      <response code="403">If the caller does not have the Admin role.</response>
+      <response code="404">If the ticket or the specified agent does not exist.</response>
     </AssignAgent>
   </members>
 </docs>

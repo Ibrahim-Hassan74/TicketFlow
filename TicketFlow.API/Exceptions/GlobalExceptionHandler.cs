@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using TicketFlow.Application.Common.Exceptions;
@@ -6,8 +6,20 @@ using TicketFlow.Domain.Exceptions;
 
 namespace TicketFlow.API.Exceptions
 {
-    public class GlobalExceptionHandler(IProblemDetailsService problemDetailsService, ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
+    /// <include file='../Docs/ExceptionsDocs.xml' path='docs/members[@name="GlobalExceptionHandler"]/Class/*' />
+    public class GlobalExceptionHandler : IExceptionHandler
     {
+        private readonly IProblemDetailsService _problemDetailsService;
+        private readonly ILogger<GlobalExceptionHandler> _logger;
+
+        /// <include file='../Docs/ExceptionsDocs.xml' path='docs/members[@name="GlobalExceptionHandler"]/Constructor/*' />
+        public GlobalExceptionHandler(IProblemDetailsService problemDetailsService, ILogger<GlobalExceptionHandler> logger)
+        {
+            _problemDetailsService = problemDetailsService;
+            _logger = logger;
+        }
+
+        /// <include file='../Docs/ExceptionsDocs.xml' path='docs/members[@name="GlobalExceptionHandler"]/TryHandleAsync/*' />
         public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
         {
             var problem = exception switch
@@ -96,17 +108,17 @@ namespace TicketFlow.API.Exceptions
             // 2. Smart Logging
             if (problem.Status >= 500)
             {
-                logger.LogError(exception, "Unhandled server error occurred: {Message}", exception.Message);
+                _logger.LogError(exception, "Unhandled server error occurred: {Message}", exception.Message);
             }
             else
             {
-                logger.LogWarning("Handled application exception ({StatusCode}): {Message}", problem.Status, problem.Detail);
+                _logger.LogWarning("Handled application exception ({StatusCode}): {Message}", problem.Status, problem.Detail);
             }
 
             // 3. Write Response
             httpContext.Response.StatusCode = problem.Status!.Value;
 
-            await problemDetailsService.WriteAsync(new ProblemDetailsContext
+            await _problemDetailsService.WriteAsync(new ProblemDetailsContext
             {
                 HttpContext = httpContext,
                 ProblemDetails = problem,

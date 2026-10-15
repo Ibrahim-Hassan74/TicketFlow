@@ -1,15 +1,14 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using TicketFlow.Application.Common.Interfaces;
 
 namespace TicketFlow.API.Services
 {
-    /// <summary>
-    /// Provides information about the currently authenticated user from the HTTP context.
-    /// </summary>
+    /// <include file='../Docs/ServicesDocs.xml' path='docs/members[@name="CurrentUserService"]/Class/*' />
     public class CurrentUserService : ICurrentUserService
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
 
+        /// <include file='../Docs/ServicesDocs.xml' path='docs/members[@name="CurrentUserService"]/Constructor/*' />
         public CurrentUserService(IHttpContextAccessor httpContextAccessor)
         {
             _httpContextAccessor = httpContextAccessor;

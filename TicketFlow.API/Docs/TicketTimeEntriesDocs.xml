@@ -3,48 +3,66 @@
   <members name="TicketTimeEntriesController">
     <Class>
       <summary>
-        Controller responsible for managing logged work hours and time entries on support tickets.
+        Controller responsible for recording and querying billable and operational work hours logged on support tickets.
       </summary>
+      <remarks>
+        Route prefix: &lt;code&gt;api/v1/tickets/{ticketId}/time-entries&lt;/code&gt;.
+        All time entry endpoints require authentication and enforce role-based access control.
+      </remarks>
     </Class>
 
     <Constructor>
       <summary>
         Initializes a new instance of the <see cref="TicketFlow.API.Controllers.TicketTimeEntriesController"/> class.
       </summary>
-      <param name="mediator">The MediatR mediator instance.</param>
-      <param name="currentUserService">The service used to obtain the current authenticated user's ID and role.</param>
+      <param name="mediator">The MediatR mediator instance used for dispatching time entry queries and commands.</param>
+      <param name="currentUserService">The service used to obtain the current authenticated user's ID and role from JWT claims.</param>
     </Constructor>
 
     <GetTimeEntries>
       <summary>
-        Retrieves all time logs and the total duration recorded for a specific ticket.
+        Retrieves all work logs and cumulative total duration recorded for a specific ticket.
       </summary>
       <remarks>
-        Restricted to Administrators and the Support Agent assigned to the ticket. Customers are not permitted to view time entries.
+        Restricted to users with the &lt;b&gt;Admin&lt;/b&gt; role or the &lt;b&gt;SupportAgent&lt;/b&gt; assigned to the ticket.
+        Customers are strictly forbidden from viewing time entry details.
+        Returns:
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Entries:&lt;/b&gt; Individual time log items (entry ID, logging agent display name, work date, duration in minutes, description, and created timestamp).&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;TotalMinutesLogged:&lt;/b&gt; Aggregated total minutes recorded on this ticket.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
       </remarks>
-      <param name="ticketId">The unique identifier (GUID) of the ticket.</param>
-      <returns>A list of individual time log entries along with cumulative total logged minutes.</returns>
-      <response code="200">Returns the time entry logs for the ticket.</response>
-      <response code="401">If the user is not authenticated.</response>
-      <response code="403">If the user is a customer or not assigned to the ticket.</response>
+      <param name="ticketId">The unique identifier (GUID) of the parent ticket.</param>
+      <returns>The time entries response object containing the log records and total logged minutes.</returns>
+      <response code="200">Returns the list of time entries and aggregated work duration.</response>
+      <response code="400">If the provided ticket ID is not a valid GUID format.</response>
+      <response code="401">If the request lacks a valid Bearer token.</response>
+      <response code="403">If the caller is a customer or a support agent not assigned to this ticket.</response>
       <response code="404">If the ticket does not exist.</response>
     </GetTimeEntries>
 
     <AddTimeEntry>
       <summary>
-        Logs a new work duration entry for a specific ticket.
+        Logs a new work duration entry against a specific support ticket.
       </summary>
       <remarks>
-        Only the Support Agent currently assigned to the ticket can log work time.
+        Restricted exclusively to users in the &lt;b&gt;SupportAgent&lt;/b&gt; role.
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;The caller must be the specific Support Agent assigned to this ticket.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;WorkDate:&lt;/b&gt; Cannot be a future date.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;DurationMinutes:&lt;/b&gt; Must be between 1 and 1440 minutes (up to 24 hours).&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Description:&lt;/b&gt; Required work summary, maximum 500 characters.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Automatically logs a &lt;code&gt;TimeLogged&lt;/code&gt; activity event in the ticket audit trail.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
       </remarks>
-      <param name="ticketId">The unique identifier (GUID) of the ticket.</param>
-      <param name="request">The time entry payload (work date, duration in minutes, and work description).</param>
-      <returns>An empty success response confirmation.</returns>
-      <response code="200">Time entry was successfully logged.</response>
-      <response code="400">If the request payload fails validation (e.g. duration &lt;= 0).</response>
-      <response code="401">If the user is not authenticated.</response>
-      <response code="403">If the caller is not the assigned support agent.</response>
-      <response code="404">If the ticket does not exist.</response>
+      <param name="ticketId">The unique identifier (GUID) of the parent ticket.</param>
+      <param name="request">The time entry payload containing work date, duration in minutes, and description.</param>
+      <returns>No content on success.</returns>
+      <response code="204">Work time entry logged successfully.</response>
+      <response code="400">If the payload fails validation (e.g., future work date, duration &amp;lt; 1 or &amp;gt; 1440, missing description).</response>
+      <response code="401">If the request lacks a valid Bearer token.</response>
+      <response code="403">If the caller does not have the SupportAgent role.</response>
+      <response code="404">If the ticket was not found or is not assigned to the calling agent.</response>
     </AddTimeEntry>
   </members>
 </docs>
