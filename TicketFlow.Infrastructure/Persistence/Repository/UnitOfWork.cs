@@ -1,3 +1,4 @@
+using TicketFlow.Application.Common.Interfaces;
 using TicketFlow.Domain.Contracts;
 
 namespace TicketFlow.Infrastructure.Persistence.Repository
@@ -12,13 +13,13 @@ namespace TicketFlow.Infrastructure.Persistence.Repository
 
         public ITimeEntryRepository TimeEntryRepository { get; }
 
-        public UnitOfWork(ApplicationDbContext context)
+        public UnitOfWork(ApplicationDbContext context, ISqlConnectionFactory? connectionFactory = null)
         {
             _context = context;
-            TicketActivityRepository = new TicketActivityRepository(_context);
-            TicketCommentRepository = new TicketCommentRepository(_context);
-            TicketsRepository = new TicketsRepository(_context);
-            TimeEntryRepository = new TimeEntryRepository(_context);
+            TicketActivityRepository = new TicketActivityRepository(_context, connectionFactory);
+            TicketCommentRepository = new TicketCommentRepository(_context, connectionFactory);
+            TicketsRepository = new TicketsRepository(_context, connectionFactory);
+            TimeEntryRepository = new TimeEntryRepository(_context, connectionFactory);
         }
 
 
