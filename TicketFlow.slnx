@@ -7,6 +7,7 @@
     <Project Path="TicketFlow.Infrastructure/TicketFlow.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/Tests/">
+    <Project Path="TicketFlow.API.Tests/TicketFlow.API.Tests.csproj" />
     <Project Path="TicketFlow.Application.Tests/TicketFlow.Application.Tests.csproj" Id="0e07ab0e-6b89-4dbb-a632-bfef63215bf9" />
     <Project Path="TicketFlow.ControllerTests/TicketFlow.ControllerTests.csproj" Id="f2856b8f-ff9a-4892-b518-619ed393e0a9" />
     <Project Path="TicketFlow.ServiceTests/TicketFlow.ServiceTests.csproj" Id="1c5dcb28-cf47-466b-9650-81eecffc2d03" />
