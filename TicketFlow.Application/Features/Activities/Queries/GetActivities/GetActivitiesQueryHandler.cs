@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.Extensions.Logging;
 using System.Data;
 using TicketFlow.Application.Common.Exceptions;
@@ -29,14 +29,11 @@ namespace TicketFlow.Application.Features.Activities.Queries.GetActivities
                 throw new NotFoundException("Ticket not found or you do not have access.");
             }
 
-            var activities = await _unitOfWork.TicketActivityRepository.GetFilteredAsync(
-                a => a.TicketId == request.TicketId,
-                cancellationToken,
-                a => a.User);
+            var activities = await _unitOfWork.TicketActivityRepository.GetActivitiesByTicketIdAsync(
+                request.TicketId,
+                cancellationToken);
 
-            var orderedActivities = activities.OrderBy(a => a.CreatedAt).ToList();
-
-            var response = orderedActivities.Select(a => new ActivityResponse
+            var response = activities.Select(a => new ActivityResponse
             {
                 Id = a.Id,
                 TicketId = a.TicketId,

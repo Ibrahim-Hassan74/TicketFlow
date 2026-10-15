@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.Extensions.Logging;
 using System.Data;
 using TicketFlow.Application.Common.Exceptions;
@@ -29,14 +29,11 @@ namespace TicketFlow.Application.Features.Comments.Queries.GetComments
                 throw new NotFoundException("Ticket not found or you do not have access.");
             }
 
-            var comments = await _unitOfWork.TicketCommentRepository.GetFilteredAsync(
-                c => c.TicketId == request.TicketId,
-                cancellationToken,
-                c => c.User);
+            var comments = await _unitOfWork.TicketCommentRepository.GetCommentsByTicketIdAsync(
+                request.TicketId,
+                cancellationToken);
 
-            var orderedComments = comments.OrderBy(c => c.CreatedAt).ToList();
-
-            var response = orderedComments.Select(c => new CommentResponse
+            var response = comments.Select(c => new CommentResponse
             {
                 Id = c.Id,
                 TicketId = c.TicketId,

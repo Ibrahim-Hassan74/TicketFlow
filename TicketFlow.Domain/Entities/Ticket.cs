@@ -18,7 +18,7 @@ namespace TicketFlow.Domain.Entities
 
         public Guid CustomerId { get; set; }
 
-        public Guid? AssignedAgentId { get; private set; }
+        public Guid? AssignedAgentId { get; set; }
 
         public DateTimeOffset CreatedAt { get; set; }
 
