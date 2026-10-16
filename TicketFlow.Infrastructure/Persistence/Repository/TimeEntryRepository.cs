@@ -24,7 +24,7 @@ namespace TicketFlow.Infrastructure.Persistence.Repository
             }
 
             using var connection = _connectionFactory.CreateConnection();
-            const string sql = "SELECT * FROM sp_get_ticket_time_entries(@TicketId);";
+            const string sql = "SELECT * FROM fn_get_ticket_time_entries(@TicketId);";
 
             var rows = await connection.QueryAsync<TimeEntryRow>(
                 new CommandDefinition(sql, new { TicketId = ticketId }, cancellationToken: ct));

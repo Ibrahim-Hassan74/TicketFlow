@@ -19,7 +19,7 @@ namespace TicketFlow.Infrastructure.Persistence.Repository
         public async Task<DashboardStatsResponse> GetDashboardStatsAsync(CancellationToken ct = default)
         {
             using var connection = _connectionFactory.CreateConnection();
-            const string sql = "SELECT * FROM sp_get_dashboard_stats();";
+            const string sql = "SELECT * FROM fn_get_dashboard_stats();";
 
             var stats = await connection.QueryFirstOrDefaultAsync<DashboardStatsResponse>(
                 new CommandDefinition(sql, cancellationToken: ct));
@@ -30,7 +30,7 @@ namespace TicketFlow.Infrastructure.Persistence.Repository
         public async Task<IEnumerable<AgentWorkloadResponse>> GetAgentWorkloadAsync(CancellationToken ct = default)
         {
             using var connection = _connectionFactory.CreateConnection();
-            const string sql = "SELECT * FROM sp_get_agent_workload();";
+            const string sql = "SELECT * FROM fn_get_agent_workload();";
 
             var workload = await connection.QueryAsync<AgentWorkloadResponse>(
                 new CommandDefinition(sql, cancellationToken: ct));
@@ -41,7 +41,7 @@ namespace TicketFlow.Infrastructure.Persistence.Repository
         public async Task<IEnumerable<TicketTrendResponse>> GetTicketTrendsAsync(int days, CancellationToken ct = default)
         {
             using var connection = _connectionFactory.CreateConnection();
-            const string sql = "SELECT * FROM sp_get_ticket_trends(@Days);";
+            const string sql = "SELECT * FROM fn_get_ticket_trends(@Days);";
 
             var trends = await connection.QueryAsync<TicketTrendResponse>(
                 new CommandDefinition(sql, new { Days = days }, cancellationToken: ct));

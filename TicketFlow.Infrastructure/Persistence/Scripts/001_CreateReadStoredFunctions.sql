@@ -4,7 +4,7 @@
 -- ===================================================================================
 
 -- 1. Dashboard Stats Function
-CREATE OR REPLACE FUNCTION sp_get_dashboard_stats()
+CREATE OR REPLACE FUNCTION fn_get_dashboard_stats()
 RETURNS TABLE (
     "TotalTickets" INT,
     "OpenTickets" INT,
@@ -33,7 +33,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- 2. Agent Workload Function
-CREATE OR REPLACE FUNCTION sp_get_agent_workload()
+CREATE OR REPLACE FUNCTION fn_get_agent_workload()
 RETURNS TABLE (
     "AgentId" UUID,
     "AgentName" TEXT,
@@ -58,7 +58,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- 3. Ticket Trends Function
-CREATE OR REPLACE FUNCTION sp_get_ticket_trends(p_days INT)
+CREATE OR REPLACE FUNCTION fn_get_ticket_trends(p_days INT)
 RETURNS TABLE (
     "Date" DATE,
     "OpenCount" INT,
@@ -85,7 +85,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- 4. Filtered & Paginated Tickets Function
-CREATE OR REPLACE FUNCTION sp_get_tickets(
+CREATE OR REPLACE FUNCTION fn_get_tickets(
     p_role VARCHAR,
     p_user_id UUID,
     p_status INT,
@@ -155,7 +155,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- 5. Paginated Users Function
-CREATE OR REPLACE FUNCTION sp_get_users(
+CREATE OR REPLACE FUNCTION fn_get_users(
     p_role VARCHAR,
     p_search VARCHAR,
     p_page INT,
@@ -196,7 +196,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- 6. Paginated Agents Function
-CREATE OR REPLACE FUNCTION sp_get_agents(
+CREATE OR REPLACE FUNCTION fn_get_agents(
     p_page INT,
     p_page_size INT
 )
@@ -231,7 +231,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- 7. Ticket Comments Function
-CREATE OR REPLACE FUNCTION sp_get_ticket_comments(p_ticket_id UUID)
+CREATE OR REPLACE FUNCTION fn_get_ticket_comments(p_ticket_id UUID)
 RETURNS TABLE (
     "Id" UUID,
     "TicketId" UUID,
@@ -257,7 +257,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- 8. Ticket Activities Function
-CREATE OR REPLACE FUNCTION sp_get_ticket_activities(p_ticket_id UUID)
+CREATE OR REPLACE FUNCTION fn_get_ticket_activities(p_ticket_id UUID)
 RETURNS TABLE (
     "Id" UUID,
     "TicketId" UUID,
@@ -297,7 +297,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- 9. Ticket Time Entries Function
-CREATE OR REPLACE FUNCTION sp_get_ticket_time_entries(p_ticket_id UUID)
+CREATE OR REPLACE FUNCTION fn_get_ticket_time_entries(p_ticket_id UUID)
 RETURNS TABLE (
     "Id" UUID,
     "TicketId" UUID,

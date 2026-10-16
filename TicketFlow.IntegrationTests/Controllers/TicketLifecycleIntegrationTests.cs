@@ -68,7 +68,7 @@ namespace TicketFlow.IntegrationTests.Controllers
             var commentResponse = await customerClient.PostAsJsonAsync($"/api/v1/tickets/{ticketId}/comments", commentRequest);
             commentResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-            // 7. Verify comments via Dapper stored function sp_get_ticket_comments
+            // 7. Verify comments via Dapper stored function fn_get_ticket_comments
             var getCommentsResponse = await customerClient.GetAsync($"/api/v1/tickets/{ticketId}/comments");
             getCommentsResponse.StatusCode.Should().Be(HttpStatusCode.OK);
             var comments = await getCommentsResponse.Content.ReadFromJsonAsync<List<CommentResponse>>();
@@ -85,7 +85,7 @@ namespace TicketFlow.IntegrationTests.Controllers
             var timeEntryResponse = await agentClient.PostAsJsonAsync($"/api/v1/tickets/{ticketId}/time-entries", timeEntryRequest);
             timeEntryResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-            // 9. Verify time entries via Dapper stored function sp_get_ticket_time_entries
+            // 9. Verify time entries via Dapper stored function fn_get_ticket_time_entries
             var getTimeEntriesResponse = await agentClient.GetAsync($"/api/v1/tickets/{ticketId}/time-entries");
             getTimeEntriesResponse.StatusCode.Should().Be(HttpStatusCode.OK);
             var timeEntries = await getTimeEntriesResponse.Content.ReadFromJsonAsync<TicketTimeEntriesResponse>();
@@ -93,7 +93,7 @@ namespace TicketFlow.IntegrationTests.Controllers
             timeEntries!.TotalDurationMinutes.Should().BeGreaterThanOrEqualTo(45);
             timeEntries.Entries.Should().Contain(e => e.Description == "Investigated ticket issue in test environment.");
 
-            // 10. Verify activity audit trail via Dapper stored function sp_get_ticket_activities
+            // 10. Verify activity audit trail via Dapper stored function fn_get_ticket_activities
             var getActivitiesResponse = await customerClient.GetAsync($"/api/v1/tickets/{ticketId}/activities");
             getActivitiesResponse.StatusCode.Should().Be(HttpStatusCode.OK);
             var activities = await getActivitiesResponse.Content.ReadFromJsonAsync<List<ActivityResponse>>();

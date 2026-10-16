@@ -41,7 +41,7 @@ namespace TicketFlow.Infrastructure.Persistence.Repository
             }
 
             using var connection = _connectionFactory.CreateConnection();
-            const string sql = "SELECT * FROM sp_get_tickets(@Role, @UserId, @Status, @Priority, @Search, @Page, @PageSize, @SortBy, @SortOrder);";
+            const string sql = "SELECT * FROM fn_get_tickets(@Role, @UserId, @Status, @Priority, @Search, @Page, @PageSize, @SortBy, @SortOrder);";
 
             var rows = (await connection.QueryAsync<TicketRow>(
                 new CommandDefinition(sql, new
