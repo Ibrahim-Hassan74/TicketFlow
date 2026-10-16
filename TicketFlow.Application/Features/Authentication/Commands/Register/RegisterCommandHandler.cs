@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using TicketFlow.Application.Common.Exceptions;
@@ -36,7 +36,7 @@ namespace TicketFlow.Application.Features.Authentication.Commands.Register
                 Email = request.Email,
                 PhoneNumber = request.Phone,
                 EmailConfirmed = true,
-                CreatedAt = DateTimeOffset.Now
+                CreatedAt = DateTimeOffset.UtcNow
             };
 
             IdentityResult result = await _userManager.CreateAsync(user, request.Password);

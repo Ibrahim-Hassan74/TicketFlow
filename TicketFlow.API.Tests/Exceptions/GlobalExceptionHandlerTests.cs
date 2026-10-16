@@ -3,6 +3,7 @@ using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TicketFlow.API.Exceptions;
@@ -261,6 +262,31 @@ namespace TicketFlow.API.Tests.Exceptions
             capturedContext!.ProblemDetails.Title.Should().Be("Conflict");
             capturedContext.ProblemDetails.Status.Should().Be(StatusCodes.Status409Conflict);
             capturedContext.ProblemDetails.Detail.Should().Be(exception.Message);
+        }
+
+        [Fact]
+        public async Task TryHandleAsync_WhenDbUpdateConcurrencyException_SetsStatus409AndWritesConcurrencyConflictDetails()
+        {
+            // Arrange
+            var httpContext = new DefaultHttpContext();
+            var exception = new DbUpdateConcurrencyException("Concurrency violation.");
+
+            ProblemDetailsContext? capturedContext = null;
+            _problemDetailsServiceMock
+                .Setup(p => p.WriteAsync(It.IsAny<ProblemDetailsContext>()))
+                .Callback<ProblemDetailsContext>(ctx => capturedContext = ctx)
+                .Returns(ValueTask.CompletedTask);
+
+            // Act
+            var handled = await _handler.TryHandleAsync(httpContext, exception, CancellationToken.None);
+
+            // Assert
+            handled.Should().BeTrue();
+            httpContext.Response.StatusCode.Should().Be(StatusCodes.Status409Conflict);
+            capturedContext.Should().NotBeNull();
+            capturedContext!.ProblemDetails.Title.Should().Be("Concurrency Conflict");
+            capturedContext.ProblemDetails.Status.Should().Be(StatusCodes.Status409Conflict);
+            capturedContext.ProblemDetails.Detail.Should().Contain("modified by another operation");
         }
 
         [Fact]
