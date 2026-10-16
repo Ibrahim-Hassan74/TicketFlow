@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using TicketFlow.Application.Common.Exceptions;
 using TicketFlow.Domain.Exceptions;
 
@@ -94,6 +95,13 @@ namespace TicketFlow.API.Exceptions
                     Title = "Conflict",
                     Status = StatusCodes.Status409Conflict,
                     Detail = exception.Message
+                },
+
+                DbUpdateConcurrencyException => new ProblemDetails
+                {
+                    Title = "Concurrency Conflict",
+                    Status = StatusCodes.Status409Conflict,
+                    Detail = "The record was modified by another operation since it was retrieved. Please reload and try again."
                 },
 
                 // 500 - Unhandled Server Errors

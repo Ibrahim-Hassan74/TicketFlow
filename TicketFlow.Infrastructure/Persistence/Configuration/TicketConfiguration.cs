@@ -31,7 +31,8 @@ namespace TicketFlow.Infrastructure.Persistence.Configuration
                 .IsRequired();
 
             builder.Property(t => t.RowVersion)
-                .IsRowVersion();
+                .IsRowVersion()
+                .HasDefaultValueSql("md5(random()::text)::bytea");
 
             // Relationships
 

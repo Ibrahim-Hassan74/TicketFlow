@@ -7,8 +7,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 var configPath = Path.Combine(builder.Environment.ContentRootPath, "Configurations");
 builder.Configuration
-    .AddJsonFile(Path.Combine(configPath, "appsettings.json"), optional: false, reloadOnChange: true)
-    .AddJsonFile(Path.Combine(configPath, $"appsettings.{builder.Environment.EnvironmentName}.json"), optional: true);
+    .AddJsonFile(Path.Combine(configPath, "appsettings.json"), optional: true, reloadOnChange: true)
+    .AddJsonFile(Path.Combine(configPath, $"appsettings.{builder.Environment.EnvironmentName}.json"), optional: true)
+    .AddEnvironmentVariables();
 
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
@@ -51,3 +52,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program { }

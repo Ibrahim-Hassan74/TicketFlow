@@ -497,10 +497,5 @@
         Registers and configures all core API services including controllers, exception handling, rate limiting, JWT authentication, authorization policies, CORS, Swagger, and API versioning.
       </summary><param name="services">The <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection" /> to add services to.</param><param name="configuration">The application <see cref="T:Microsoft.Extensions.Configuration.IConfiguration" /> containing connection strings, JWT settings, and CORS policies.</param><returns>The configured <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection" /> instance for chaining.</returns>
         </member>
-        <member name="T:Program">
-            <summary>
-            Auto-generated public partial Program class for top-level statement apps.
-            </summary>
-        </member>
     </members>
 </doc>
