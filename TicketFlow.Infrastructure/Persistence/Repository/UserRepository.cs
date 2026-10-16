@@ -27,7 +27,7 @@ namespace TicketFlow.Infrastructure.Persistence.Repository
             CancellationToken ct = default)
         {
             using var connection = _connectionFactory.CreateConnection();
-            const string sql = "SELECT * FROM sp_get_users(@Role, @Search, @Page, @PageSize);";
+            const string sql = "SELECT * FROM fn_get_users(@Role, @Search, @Page, @PageSize);";
 
             var rows = (await connection.QueryAsync<UserRow>(
                 new CommandDefinition(sql, new
@@ -90,7 +90,7 @@ namespace TicketFlow.Infrastructure.Persistence.Repository
             if (pageSize > 100) pageSize = 100;
 
             using var connection = _connectionFactory.CreateConnection();
-            const string sql = "SELECT * FROM sp_get_agents(@Page, @PageSize);";
+            const string sql = "SELECT * FROM fn_get_agents(@Page, @PageSize);";
 
             var rows = (await connection.QueryAsync<UserRow>(
                 new CommandDefinition(sql, new
