@@ -409,11 +409,14 @@ FodyWeavers.xsd
 .vs/
 **/appsettings.json
 **/appsettings.Development.json
+**/appsettings.Testing.json
 **/appsettings.Production.json
-/SupportTicketManagement.API/Configurations/appsettings.Production.json
+!**/appsettings.example.json
+/TicketFlow.API/Configurations/appsettings.Production.json
 
 # Docker environment secrets
 .env
+!.env.example
 
 # Application Logs
 Logs/

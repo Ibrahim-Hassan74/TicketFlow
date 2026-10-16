@@ -2,17 +2,20 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
 WORKDIR /src
 
-# Copy solution and project files first (for layer caching)
-COPY TicketFlow.slnx .
-COPY TicketFlow.API/TicketFlow.API.csproj TicketFlow.API/
-COPY TicketFlow.Core/TicketFlow.Core.csproj TicketFlow.Core/
+# Copy project files first (for layer caching)
+COPY TicketFlow.Domain/TicketFlow.Domain.csproj TicketFlow.Domain/
+COPY TicketFlow.Application/TicketFlow.Application.csproj TicketFlow.Application/
 COPY TicketFlow.Infrastructure/TicketFlow.Infrastructure.csproj TicketFlow.Infrastructure/
+COPY TicketFlow.API/TicketFlow.API.csproj TicketFlow.API/
 
 # Restore dependencies
-RUN dotnet restore TicketFlow.slnx
+RUN dotnet restore TicketFlow.API/TicketFlow.API.csproj
 
-# Copy everything else
-COPY . .
+# Copy source directories
+COPY TicketFlow.Domain/ TicketFlow.Domain/
+COPY TicketFlow.Application/ TicketFlow.Application/
+COPY TicketFlow.Infrastructure/ TicketFlow.Infrastructure/
+COPY TicketFlow.API/ TicketFlow.API/
 
 # Build and publish
 RUN dotnet publish TicketFlow.API/TicketFlow.API.csproj \
