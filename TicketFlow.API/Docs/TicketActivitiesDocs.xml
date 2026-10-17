@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<docs>
+  <members name="TicketActivitiesController">
+    <Class>
+      <summary>
+        Controller responsible for retrieving the chronological activity timeline and immutable audit trail for support tickets.
+      </summary>
+      <remarks>
+        Route prefix: &lt;code&gt;api/v1/tickets/{ticketId}/activities&lt;/code&gt;.
+        All activity endpoints require authentication and enforce ticket-level ownership access control.
+      </remarks>
+    </Class>
+
+    <Constructor>
+      <summary>
+        Initializes a new instance of the <see cref="TicketFlow.API.Controllers.TicketActivitiesController"/> class.
+      </summary>
+      <param name="mediator">The MediatR mediator instance used for dispatching activity queries.</param>
+      <param name="currentUserService">The service used to obtain the current authenticated user's ID and role from JWT claims.</param>
+    </Constructor>
+
+    <GetActivities>
+      <summary>
+        Retrieves the chronological audit trail and activity history for a specific support ticket.
+      </summary>
+      <remarks>
+        Access is governed by ticket ownership rules:
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Admin:&lt;/b&gt; Can access the activity timeline of any ticket.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;SupportAgent:&lt;/b&gt; Can access activities for tickets assigned to them.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Customer:&lt;/b&gt; Can access activities for tickets they created.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+        &lt;b&gt;Activity Types Recorded:&lt;/b&gt;
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;&lt;code&gt;Created&lt;/code&gt;: Ticket submission by customer.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;code&gt;StatusChanged&lt;/code&gt;: Status transitions (includes OldValue and NewValue).&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;code&gt;PriorityChanged&lt;/code&gt;: Priority adjustments by admin (includes OldValue and NewValue).&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;code&gt;AgentAssigned&lt;/code&gt;: Assignment of support agent.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;code&gt;CommentAdded&lt;/code&gt;: When a new public comment is posted.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;code&gt;TimeLogged&lt;/code&gt;: When work duration is recorded by an agent.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;code&gt;Closed&lt;/code&gt;: Final ticket closure event.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+      </remarks>
+      <param name="ticketId">The unique identifier (GUID) of the parent ticket.</param>
+      <returns>A chronological list of activity log entries including event type, user name, descriptions, and audit timestamps.</returns>
+      <response code="200">Returns the full activity timeline for the ticket.</response>
+      <response code="400">If the provided ticket ID is not a valid GUID format.</response>
+      <response code="401">If the request lacks a valid Bearer token.</response>
+      <response code="404">If the ticket does not exist or the caller lacks permission to view it.</response>
+    </GetActivities>
+  </members>
+</docs>

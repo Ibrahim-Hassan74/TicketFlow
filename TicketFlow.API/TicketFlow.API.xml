@@ -1,0 +1,501 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>TicketFlow.API</name>
+    </assembly>
+    <members>
+        <member name="T:TicketFlow.API.Attributes.ProducesValidationProblemAttribute">
+            <summary>
+            Shorthand attribute for HTTP 400 with ValidationProblemDetails.
+            </summary>
+        </member>
+        <member name="M:TicketFlow.API.Attributes.ProducesValidationProblemAttribute.#ctor">
+            <summary>
+            Shorthand attribute for HTTP 400 with ValidationProblemDetails.
+            </summary>
+        </member>
+        <member name="T:TicketFlow.API.Attributes.ProducesProblemAttribute">
+            <summary>
+            Shorthand attribute for any HTTP status code with ProblemDetails.
+            </summary>
+        </member>
+        <member name="M:TicketFlow.API.Attributes.ProducesProblemAttribute.#ctor(System.Int32)">
+            <summary>
+            Shorthand attribute for any HTTP status code with ProblemDetails.
+            </summary>
+        </member>
+        <member name="T:TicketFlow.API.Controllers.AccountController">
+            <summary>
+        Controller responsible for user authentication, account registration, token lifecycle management, and profile retrieval.
+      </summary><remarks>
+        Implements JWT Bearer authentication with short-lived access tokens and database-backed refresh tokens.
+        All validation and authentication errors return RFC 7807 &lt;code&gt;ProblemDetails&lt;/code&gt; responses.
+      </remarks>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.AccountController.#ctor(MediatR.IMediator,TicketFlow.Application.Common.Interfaces.ICurrentUserService)">
+            <summary>
+        Initializes a new instance of the <see cref="T:TicketFlow.API.Controllers.AccountController" /> class.
+      </summary><param name="mediator">The MediatR mediator instance used for dispatching authentication commands and queries.</param><param name="currentUserService">The service used to obtain the current authenticated user ID and role from JWT claims.</param>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.AccountController.PostRegister(TicketFlow.Application.Features.Authentication.Commands.Register.RegisterCommand)">
+            <summary>
+        Registers a new customer account in the system.
+      </summary><remarks>
+        Public endpoint accessible to unauthenticated guests (&lt;code&gt;NotAuthorized&lt;/code&gt; policy).
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;Automatically assigns the &lt;b&gt;Customer&lt;/b&gt; role to newly registered users.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Password Requirements:&lt;/b&gt; Minimum 8 characters, at least one uppercase letter, one lowercase letter, and one digit.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Email &amp;amp; Username Uniqueness:&lt;/b&gt; Enforces unique email and username across the system.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+      </remarks><param name="command">The registration command containing username, email, phone number, password, and password confirmation.</param><returns>The registration result details including user ID, username, email, and assigned customer role.</returns><response code="200">Registration succeeded and the new customer account was created.</response><response code="400">If input validation fails (e.g., passwords do not match, email format is invalid, phone contains non-digits, or password complexity rules are not met).</response><response code="409">If an account with the specified email or username already exists.</response>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.AccountController.PostLogin(TicketFlow.Application.Features.Authentication.Commands.Login.LoginCommand)">
+            <summary>
+        Authenticates user credentials and issues a signed JWT access token and refresh token.
+      </summary><remarks>
+        Public endpoint accessible to unauthenticated guests (&lt;code&gt;NotAuthorized&lt;/code&gt; policy).
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;Validates email and password against ASP.NET Core Identity store.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Generates a cryptographically secure JWT access token with role, ID, and email claims.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Issues a database-stored refresh token with configurable expiration.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Lockout Protection:&lt;/b&gt; Accounts are automatically locked out after 5 consecutive failed attempts.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+      </remarks><param name="command">The login payload containing user email and password credentials.</param><returns>An authentication response containing the JWT bearer access token, expiration datetime, and refresh token.</returns><response code="200">Authentication successful. Returns the JWT access token and refresh token.</response><response code="400">If required fields are missing or email format is invalid.</response><response code="401">If the email/password combination is incorrect.</response><response code="403">If the account has been deactivated or disabled by an administrator.</response><response code="404">If no user exists with the provided email.</response><response code="423">If the user account is temporarily locked due to multiple consecutive failed login attempts.</response>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.AccountController.RefreshToken(TicketFlow.Application.Features.Authentication.Commands.RefreshToken.RefreshTokenCommand)">
+            <summary>
+        Exchanges an expired JWT access token and a valid refresh token for a newly generated token pair.
+      </summary><remarks>
+        Public endpoint allowing clients to renew expired sessions without re-entering credentials.
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;Validates the cryptographic signature of the expired JWT token (ignoring its lifetime).&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Verifies the provided refresh token matches the active token stored in the database and is not expired.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Issues a new access token and a rotated refresh token to prevent replay attacks.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+      </remarks><param name="command">The token renewal payload containing the expired access token and matching refresh token.</param><returns>An authentication response containing the renewed JWT access token and updated refresh token.</returns><response code="200">Tokens refreshed successfully.</response><response code="400">If the refresh token is missing, expired, revoked, or fails validation against the user account.</response><response code="404">If the user associated with the token claims no longer exists.</response>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.AccountController.PostLogout">
+            <summary>
+        Terminates the authenticated user session and revokes the active refresh token.
+      </summary><remarks>
+        Requires a valid Bearer token.
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;Extracts the authenticated user ID from JWT claims.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Clears the stored refresh token in the database, preventing future token renewals.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Signs out the user session via Identity SignInManager.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+      </remarks><returns>No content on success.</returns><response code="204">Logout succeeded and refresh token revoked.</response><response code="401">If the request lacks a valid Bearer token or the token has expired.</response>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.AccountController.GetCurrentUser">
+            <summary>
+        Retrieves the profile and account details of the currently authenticated user.
+      </summary><remarks>
+        Requires a valid Bearer token.
+        Extracts user ID directly from JWT claims (&lt;code&gt;NameIdentifier&lt;/code&gt;) and queries account status, display name, email, and assigned role.
+      </remarks><returns>The user profile response DTO containing user ID, display name, email, role, and active status.</returns><response code="200">Returns the authenticated user profile.</response><response code="401">If the request lacks a valid Bearer token.</response><response code="404">If the user account could not be found in the database.</response>
+        </member>
+        <member name="T:TicketFlow.API.Controllers.CustomControllerBase">
+            <summary>
+        Base controller for the TicketFlow Web API, providing shared routing and MediatR dispatching capabilities.
+      </summary>
+        </member>
+        <member name="F:TicketFlow.API.Controllers.CustomControllerBase._mediator">
+            <summary>
+        The MediatR mediator instance used by derived controllers to dispatch commands and queries.
+      </summary>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.CustomControllerBase.#ctor(MediatR.IMediator)">
+            <summary>
+        Initializes a new instance of the <see cref="T:TicketFlow.API.Controllers.CustomControllerBase" /> class.
+      </summary><param name="mediator">The MediatR mediator instance.</param>
+        </member>
+        <member name="T:TicketFlow.API.Controllers.DashboardController">
+            <summary>
+        Controller responsible for aggregating system-wide analytics, key performance indicators (KPIs), workload metrics, and ticket trends.
+      </summary><remarks>
+        All endpoints in this controller are strictly restricted to users in the &lt;b&gt;Admin&lt;/b&gt; role.
+        Designed for administrative reporting, monitoring operational throughput, and agent capacity tracking.
+      </remarks>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.DashboardController.#ctor(MediatR.IMediator,TicketFlow.Application.Common.Interfaces.ICurrentUserService)">
+            <summary>
+        Initializes a new instance of the <see cref="T:TicketFlow.API.Controllers.DashboardController" /> class.
+      </summary><param name="mediator">The MediatR mediator instance used for dispatching dashboard analytics queries.</param><param name="currentUserService">The service used to obtain the current authenticated user's ID and role from JWT claims.</param>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.DashboardController.GetStats">
+            <summary>
+        Retrieves high-level system statistics, ticket status breakdowns, and resolution performance indicators.
+      </summary><remarks>
+        Restricted exclusively to users in the &lt;b&gt;Admin&lt;/b&gt; role.
+        Returns:
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;TotalTickets:&lt;/b&gt; Overall count of tickets in the system.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;OpenTickets:&lt;/b&gt; Tickets currently in the Open state waiting for investigation.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;InProgressTickets:&lt;/b&gt; Tickets currently actively being worked on by assigned agents.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;ResolvedTickets:&lt;/b&gt; Tickets resolved by support agents waiting for customer review.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;ClosedTickets:&lt;/b&gt; Tickets fully closed.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;CriticalOpenTickets:&lt;/b&gt; Unresolved tickets with Critical priority requiring immediate attention.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;AverageResolutionTimeHours:&lt;/b&gt; Mean turnaround duration from creation to resolution in hours.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+      </remarks><returns>The aggregate dashboard KPI statistics response DTO.</returns><response code="200">Returns the system KPI summary statistics.</response><response code="401">If the request lacks a valid Bearer token.</response><response code="403">If the caller does not have the Admin role.</response>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.DashboardController.GetAgentWorkload">
+            <summary>
+        Retrieves real-time workload distribution and operational throughput across all Support Agents.
+      </summary><remarks>
+        Restricted exclusively to users in the &lt;b&gt;Admin&lt;/b&gt; role.
+        Provides a per-agent breakdown:
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;Agent GUID, DisplayName, and Email.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;AssignedTickets:&lt;/b&gt; Number of currently active tickets assigned to this agent.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;TotalMinutesLogged:&lt;/b&gt; Cumulative work minutes logged across all tickets.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+        Useful for balancing queue workloads and identifying overloaded or underutilized agents.
+      </remarks><returns>A list of agent workload response objects.</returns><response code="200">Returns the agent workload distribution metrics.</response><response code="401">If the request lacks a valid Bearer token.</response><response code="403">If the caller does not have the Admin role.</response>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.DashboardController.GetTicketTrends(System.Int32)">
+            <summary>
+        Retrieves daily ticket volume trends (created vs. closed) over a specified historical lookback period.
+      </summary><remarks>
+        Restricted exclusively to users in the &lt;b&gt;Admin&lt;/b&gt; role.
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Lookback Range:&lt;/b&gt; &lt;code&gt;days&lt;/code&gt; parameter must be between 1 and 365 (defaults to 30).&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Returns chronological daily buckets with date, count of created tickets, and count of closed tickets.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Powers visual time-series charts on the admin analytics dashboard.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+      </remarks><param name="days">The number of days to look back for trend analysis (1 to 365, default is 30).</param><returns>A list of daily trend data points with date, created count, and closed count.</returns><response code="200">Returns the daily historical trend data points.</response><response code="400">If the days parameter is less than 1 or greater than 365.</response><response code="401">If the request lacks a valid Bearer token.</response><response code="403">If the caller does not have the Admin role.</response>
+        </member>
+        <member name="T:TicketFlow.API.Controllers.TicketActivitiesController">
+            <summary>
+        Controller responsible for retrieving the chronological activity timeline and immutable audit trail for support tickets.
+      </summary><remarks>
+        Route prefix: &lt;code&gt;api/v1/tickets/{ticketId}/activities&lt;/code&gt;.
+        All activity endpoints require authentication and enforce ticket-level ownership access control.
+      </remarks>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.TicketActivitiesController.#ctor(MediatR.IMediator,TicketFlow.Application.Common.Interfaces.ICurrentUserService)">
+            <summary>
+        Initializes a new instance of the <see cref="T:TicketFlow.API.Controllers.TicketActivitiesController" /> class.
+      </summary><param name="mediator">The MediatR mediator instance used for dispatching activity queries.</param><param name="currentUserService">The service used to obtain the current authenticated user's ID and role from JWT claims.</param>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.TicketActivitiesController.GetActivities(System.Guid)">
+            <summary>
+        Retrieves the chronological audit trail and activity history for a specific support ticket.
+      </summary><remarks>
+        Access is governed by ticket ownership rules:
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Admin:&lt;/b&gt; Can access the activity timeline of any ticket.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;SupportAgent:&lt;/b&gt; Can access activities for tickets assigned to them.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Customer:&lt;/b&gt; Can access activities for tickets they created.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+        &lt;b&gt;Activity Types Recorded:&lt;/b&gt;
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;&lt;code&gt;Created&lt;/code&gt;: Ticket submission by customer.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;code&gt;StatusChanged&lt;/code&gt;: Status transitions (includes OldValue and NewValue).&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;code&gt;PriorityChanged&lt;/code&gt;: Priority adjustments by admin (includes OldValue and NewValue).&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;code&gt;AgentAssigned&lt;/code&gt;: Assignment of support agent.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;code&gt;CommentAdded&lt;/code&gt;: When a new public comment is posted.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;code&gt;TimeLogged&lt;/code&gt;: When work duration is recorded by an agent.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;code&gt;Closed&lt;/code&gt;: Final ticket closure event.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+      </remarks><param name="ticketId">The unique identifier (GUID) of the parent ticket.</param><returns>A chronological list of activity log entries including event type, user name, descriptions, and audit timestamps.</returns><response code="200">Returns the full activity timeline for the ticket.</response><response code="400">If the provided ticket ID is not a valid GUID format.</response><response code="401">If the request lacks a valid Bearer token.</response><response code="404">If the ticket does not exist or the caller lacks permission to view it.</response>
+        </member>
+        <member name="T:TicketFlow.API.Controllers.TicketCommentsController">
+            <summary>
+        Controller responsible for managing communication, notes, and discussion comments on support tickets.
+      </summary><remarks>
+        Route prefix: &lt;code&gt;api/v1/tickets/{ticketId}/comments&lt;/code&gt;.
+        All comment endpoints require authentication and enforce ticket-level ownership access control.
+      </remarks>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.TicketCommentsController.#ctor(MediatR.IMediator,TicketFlow.Application.Common.Interfaces.ICurrentUserService)">
+            <summary>
+        Initializes a new instance of the <see cref="T:TicketFlow.API.Controllers.TicketCommentsController" /> class.
+      </summary><param name="mediator">The MediatR mediator instance used for dispatching comment queries and commands.</param><param name="currentUserService">The service used to obtain the current authenticated user's ID and role from JWT claims.</param>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.TicketCommentsController.GetComments(System.Guid)">
+            <summary>
+        Retrieves the chronological discussion thread of comments for a specific support ticket.
+      </summary><remarks>
+        Access is governed by ticket ownership rules:
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Admin:&lt;/b&gt; Can view comments on any ticket in the system.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;SupportAgent:&lt;/b&gt; Can view comments on tickets assigned to them.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Customer:&lt;/b&gt; Can view comments on tickets they created.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+        Comments are returned ordered chronologically by creation timestamp (&lt;code&gt;CreatedAt&lt;/code&gt; ascending).
+      </remarks><param name="ticketId">The unique identifier (GUID) of the parent ticket.</param><returns>A list of comment response DTOs including author display name, comment content, and creation timestamp.</returns><response code="200">Returns the chronological list of comments for the ticket.</response><response code="400">If the provided ticket ID is not a valid GUID format.</response><response code="401">If the request lacks a valid Bearer token.</response><response code="404">If the ticket does not exist or the caller lacks permission to view it.</response>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.TicketCommentsController.AddComment(System.Guid,TicketFlow.Application.Features.Comments.DTOs.CreateCommentRequest)">
+            <summary>
+        Posts a new comment to a support ticket thread.
+      </summary><remarks>
+        Authorized for users with access to the ticket:
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;Administrators, the assigned Support Agent, or the ticket owner Customer.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Content Limits:&lt;/b&gt; Content cannot be blank and must not exceed 2000 characters.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Posting a comment automatically logs a &lt;code&gt;CommentAdded&lt;/code&gt; activity event in the ticket timeline.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+      </remarks><param name="ticketId">The unique identifier (GUID) of the parent ticket.</param><param name="request">The comment payload containing the text content to post.</param><returns>A confirmation response indicating the comment was added successfully.</returns><response code="200">The comment was posted successfully.</response><response code="400">If the comment payload fails validation (e.g., blank content or text exceeding 2000 characters).</response><response code="401">If the request lacks a valid Bearer token.</response><response code="404">If the ticket does not exist or the caller lacks permission to post comments to it.</response>
+        </member>
+        <member name="T:TicketFlow.API.Controllers.TicketsController">
+            <summary>
+        Controller responsible for managing the lifecycle of support tickets.
+      </summary><remarks>
+        Provides endpoints for creating, querying, updating, assigning, and transitioning support tickets.
+        Enforces strict role-based data isolation:
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Admin:&lt;/b&gt; Unrestricted global visibility and administrative control.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;SupportAgent:&lt;/b&gt; Scoped strictly to assigned tickets.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Customer:&lt;/b&gt; Scoped strictly to tickets they created.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+        All error responses follow the RFC 7807 &lt;code&gt;ProblemDetails&lt;/code&gt; specification.
+      </remarks>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.TicketsController.#ctor(MediatR.IMediator,TicketFlow.Application.Common.Interfaces.ICurrentUserService)">
+            <summary>
+        Initializes a new instance of the <see cref="T:TicketFlow.API.Controllers.TicketsController" /> class.
+      </summary><param name="mediator">The MediatR mediator instance used for dispatching queries and commands.</param><param name="currentUserService">The service used to resolve authenticated user identity, ID, and role from JWT claims.</param>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.TicketsController.GetTickets(TicketFlow.Application.Features.Tickets.DTOs.TicketQueryRequest)">
+            <summary>
+        Retrieves a paginated and filterable list of support tickets.
+      </summary><remarks>
+        Ticket visibility is automatically filtered based on the caller's role:
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Admin:&lt;/b&gt; Can view all tickets in the system.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;SupportAgent:&lt;/b&gt; Can only view tickets assigned to them.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Customer:&lt;/b&gt; Can only view tickets they personally submitted.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+        &lt;para&gt;&lt;b&gt;Filtering &amp;amp; Search:&lt;/b&gt; Supports filtering by &lt;code&gt;Status&lt;/code&gt; (Open, InProgress, Resolved, Closed), &lt;code&gt;Priority&lt;/code&gt; (Low, Medium, High, Critical), and a case-insensitive substring search across ticket titles and descriptions.&lt;/para&gt;
+        &lt;para&gt;&lt;b&gt;Sorting:&lt;/b&gt; Supports sorting by &lt;code&gt;CreatedAt&lt;/code&gt;, &lt;code&gt;UpdatedAt&lt;/code&gt;, &lt;code&gt;Priority&lt;/code&gt;, or &lt;code&gt;Status&lt;/code&gt; in &lt;code&gt;Ascending&lt;/code&gt; or &lt;code&gt;Descending&lt;/code&gt; order.&lt;/para&gt;
+        &lt;para&gt;&lt;b&gt;Pagination:&lt;/b&gt; &lt;code&gt;Page&lt;/code&gt; must be &amp;gt;= 1 (defaults to 1); &lt;code&gt;PageSize&lt;/code&gt; must be between 1 and 100 (defaults to 10).&lt;/para&gt;
+      </remarks><param name="request">The query parameters including filtering, sorting, and pagination options.</param><returns>A paginated response containing ticket summary records, total item count, and pagination metadata.</returns><response code="200">Returns the paginated list of tickets matching the specified filters.</response><response code="400">If query parameters fail validation (e.g., page &amp;lt; 1, pageSize outside 1..100, or invalid enum value).</response><response code="401">If the request lacks a valid Bearer token or the token has expired.</response>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.TicketsController.GetTicketById(System.Guid)">
+            <summary>
+        Retrieves a single support ticket by its unique identifier.
+      </summary><remarks>
+        Access is enforced with IDOR (Insecure Direct Object Reference) prevention:
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Admin:&lt;/b&gt; Authorized to view any ticket.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;SupportAgent:&lt;/b&gt; Authorized only if assigned to this ticket.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Customer:&lt;/b&gt; Authorized only if they created this ticket.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+        If the ticket does not exist or the caller lacks permission, a &lt;b&gt;404 Not Found&lt;/b&gt; is returned to prevent resource enumeration.
+      </remarks><param name="id">The unique identifier (GUID) of the ticket.</param><returns>The detailed ticket information including customer and assigned agent display names, timestamps, and current state.</returns><response code="200">Returns the full ticket details.</response><response code="400">If the provided ticket ID is not a valid GUID format.</response><response code="401">If the request lacks a valid Bearer token.</response><response code="404">If the ticket was not found or the caller is not authorized to access it.</response>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.TicketsController.CreateTicket(TicketFlow.Application.Features.Tickets.DTOs.CreateTicketRequest)">
+            <summary>
+        Submits and creates a new support ticket.
+      </summary><remarks>
+        Restricted to users in the &lt;b&gt;Customer&lt;/b&gt; role.
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;The creator ID is automatically extracted from authenticated JWT claims.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Initial status is automatically set to &lt;code&gt;Open&lt;/code&gt;.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;A &lt;code&gt;Created&lt;/code&gt; activity event is recorded in the ticket audit trail.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;The response includes a &lt;code&gt;Location&lt;/code&gt; header pointing to the newly created resource URI.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+      </remarks><param name="request">The creation payload containing title (max 200 chars), description (max 4000 chars), and requested priority.</param><returns>The newly created ticket response with generated ID and timestamps.</returns><response code="201">The ticket was created successfully. The response body contains the ticket and the Location header has the resource URI.</response><response code="400">If the payload fails validation (e.g., missing title, description exceeding 4000 characters, invalid priority enum).</response><response code="401">If the user is not authenticated.</response><response code="403">If the authenticated user does not have the Customer role.</response>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.TicketsController.UpdateTicket(System.Guid,TicketFlow.Application.Features.Tickets.DTOs.UpdateTicketRequest)">
+            <summary>
+        Updates the core content (Title and Description) of an existing ticket.
+      </summary><remarks>
+        Restricted exclusively to users in the &lt;b&gt;Admin&lt;/b&gt; role.
+        Updates the ticket's &lt;code&gt;Title&lt;/code&gt;, &lt;code&gt;Description&lt;/code&gt;, and refreshes the &lt;code&gt;UpdatedAt&lt;/code&gt; timestamp.
+      </remarks><param name="id">The unique identifier (GUID) of the ticket to update.</param><param name="request">The update payload containing the new title (max 200 chars) and description (max 4000 chars).</param><returns>No content on success.</returns><response code="204">The ticket was updated successfully.</response><response code="400">If the update payload fails validation.</response><response code="401">If the user is not authenticated.</response><response code="403">If the caller does not have the Admin role.</response><response code="404">If the ticket with the specified ID does not exist.</response>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.TicketsController.UpdateTicketStatus(System.Guid,TicketFlow.Application.Features.Tickets.DTOs.UpdateTicketStatusRequest)">
+            <summary>
+        Transitions a ticket to a new status according to business state machine rules.
+      </summary><remarks>
+        Allowed status transitions are governed by both state machine and role permissions:
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Admin:&lt;/b&gt; Can transition to any valid status (&lt;code&gt;Open&lt;/code&gt;, &lt;code&gt;InProgress&lt;/code&gt;, &lt;code&gt;Resolved&lt;/code&gt;, &lt;code&gt;Closed&lt;/code&gt;).&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;SupportAgent:&lt;/b&gt; Can transition assigned tickets between &lt;code&gt;Open&lt;/code&gt;, &lt;code&gt;InProgress&lt;/code&gt;, and &lt;code&gt;Resolved&lt;/code&gt;. Support agents cannot close tickets.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Customer:&lt;/b&gt; Can close their own tickets (&lt;code&gt;Closed&lt;/code&gt;) or reopen a closed ticket (&lt;code&gt;Open&lt;/code&gt;). Cannot set &lt;code&gt;InProgress&lt;/code&gt; or &lt;code&gt;Resolved&lt;/code&gt;.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+        &lt;b&gt;State Machine Invariants:&lt;/b&gt;
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;An &lt;code&gt;Open&lt;/code&gt; ticket cannot be directly resolved; it must move to &lt;code&gt;InProgress&lt;/code&gt; first.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;A &lt;code&gt;Closed&lt;/code&gt; ticket can only be transitioned back to &lt;code&gt;Open&lt;/code&gt; (reopened).&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+        Automatically logs a &lt;code&gt;StatusChanged&lt;/code&gt; or &lt;code&gt;Closed&lt;/code&gt; activity event with previous and new status values.
+      </remarks><param name="id">The unique identifier (GUID) of the ticket.</param><param name="request">The status payload containing the target status enum value.</param><returns>No content on success.</returns><response code="204">The status was updated and an activity audit entry was recorded.</response><response code="400">If the transition violates role permissions or state machine rules.</response><response code="401">If the user is not authenticated.</response><response code="404">If the ticket does not exist or the caller lacks permission to access it.</response>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.TicketsController.UpdateTicketPriority(System.Guid,TicketFlow.Application.Features.Tickets.DTOs.UpdateTicketPriorityRequest)">
+            <summary>
+        Updates the priority level of an existing ticket.
+      </summary><remarks>
+        Restricted exclusively to users in the &lt;b&gt;Admin&lt;/b&gt; role.
+        Valid priorities: &lt;code&gt;Low&lt;/code&gt; (0), &lt;code&gt;Medium&lt;/code&gt; (1), &lt;code&gt;High&lt;/code&gt; (2), &lt;code&gt;Critical&lt;/code&gt; (3).
+        Automatically logs a &lt;code&gt;PriorityChanged&lt;/code&gt; activity event with previous and new priority values.
+      </remarks><param name="id">The unique identifier (GUID) of the ticket.</param><param name="request">The priority payload containing the new priority enum value.</param><returns>No content on success.</returns><response code="204">The priority was updated successfully.</response><response code="400">If the provided priority value is not a valid enum value.</response><response code="401">If the user is not authenticated.</response><response code="403">If the caller does not have the Admin role.</response><response code="404">If the ticket with the specified ID does not exist.</response>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.TicketsController.AssignAgent(System.Guid,TicketFlow.Application.Features.Tickets.DTOs.AssignTicketRequest)">
+            <summary>
+        Assigns or reassigns a Support Agent to a ticket.
+      </summary><remarks>
+        Restricted exclusively to users in the &lt;b&gt;Admin&lt;/b&gt; role.
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;The specified agent must exist and have the &lt;code&gt;SupportAgent&lt;/code&gt; role.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Tickets in a &lt;code&gt;Closed&lt;/code&gt; state cannot be assigned to an agent.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;An &lt;code&gt;AgentAssigned&lt;/code&gt; activity event is automatically recorded in the ticket timeline.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+      </remarks><param name="id">The unique identifier (GUID) of the ticket.</param><param name="request">The assignment payload containing the Support Agent's unique GUID.</param><returns>No content on success.</returns><response code="204">The agent was assigned successfully and the audit log was updated.</response><response code="400">If the ticket is closed or the assigned user is not a Support Agent.</response><response code="401">If the user is not authenticated.</response><response code="403">If the caller does not have the Admin role.</response><response code="404">If the ticket or the specified agent does not exist.</response>
+        </member>
+        <member name="T:TicketFlow.API.Controllers.TicketTimeEntriesController">
+            <summary>
+        Controller responsible for recording and querying billable and operational work hours logged on support tickets.
+      </summary><remarks>
+        Route prefix: &lt;code&gt;api/v1/tickets/{ticketId}/time-entries&lt;/code&gt;.
+        All time entry endpoints require authentication and enforce role-based access control.
+      </remarks>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.TicketTimeEntriesController.#ctor(MediatR.IMediator,TicketFlow.Application.Common.Interfaces.ICurrentUserService)">
+            <summary>
+        Initializes a new instance of the <see cref="T:TicketFlow.API.Controllers.TicketTimeEntriesController" /> class.
+      </summary><param name="mediator">The MediatR mediator instance used for dispatching time entry queries and commands.</param><param name="currentUserService">The service used to obtain the current authenticated user's ID and role from JWT claims.</param>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.TicketTimeEntriesController.GetTimeEntries(System.Guid)">
+            <summary>
+        Retrieves all work logs and cumulative total duration recorded for a specific ticket.
+      </summary><remarks>
+        Restricted to users with the &lt;b&gt;Admin&lt;/b&gt; role or the &lt;b&gt;SupportAgent&lt;/b&gt; assigned to the ticket.
+        Customers are strictly forbidden from viewing time entry details.
+        Returns:
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Entries:&lt;/b&gt; Individual time log items (entry ID, logging agent display name, work date, duration in minutes, description, and created timestamp).&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;TotalMinutesLogged:&lt;/b&gt; Aggregated total minutes recorded on this ticket.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+      </remarks><param name="ticketId">The unique identifier (GUID) of the parent ticket.</param><returns>The time entries response object containing the log records and total logged minutes.</returns><response code="200">Returns the list of time entries and aggregated work duration.</response><response code="400">If the provided ticket ID is not a valid GUID format.</response><response code="401">If the request lacks a valid Bearer token.</response><response code="403">If the caller is a customer or a support agent not assigned to this ticket.</response><response code="404">If the ticket does not exist.</response>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.TicketTimeEntriesController.AddTimeEntry(System.Guid,TicketFlow.Application.Features.TimeEntries.DTOs.CreateTimeEntryRequest)">
+            <summary>
+        Logs a new work duration entry against a specific support ticket.
+      </summary><remarks>
+        Restricted exclusively to users in the &lt;b&gt;SupportAgent&lt;/b&gt; role.
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;The caller must be the specific Support Agent assigned to this ticket.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;WorkDate:&lt;/b&gt; Cannot be a future date.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;DurationMinutes:&lt;/b&gt; Must be between 1 and 1440 minutes (up to 24 hours).&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Description:&lt;/b&gt; Required work summary, maximum 500 characters.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Automatically logs a &lt;code&gt;TimeLogged&lt;/code&gt; activity event in the ticket audit trail.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+      </remarks><param name="ticketId">The unique identifier (GUID) of the parent ticket.</param><param name="request">The time entry payload containing work date, duration in minutes, and description.</param><returns>No content on success.</returns><response code="204">Work time entry logged successfully.</response><response code="400">If the payload fails validation (e.g., future work date, duration &amp;lt; 1 or &amp;gt; 1440, missing description).</response><response code="401">If the request lacks a valid Bearer token.</response><response code="403">If the caller does not have the SupportAgent role.</response><response code="404">If the ticket was not found or is not assigned to the calling agent.</response>
+        </member>
+        <member name="T:TicketFlow.API.Controllers.UsersController">
+            <summary>
+        Controller responsible for administrative user management operations including searching, provisioning, updating, and querying user profiles.
+      </summary><remarks>
+        All endpoints in this controller require authentication and the &lt;b&gt;Admin&lt;/b&gt; role.
+        All validation errors and exceptions conform to the RFC 7807 &lt;code&gt;ProblemDetails&lt;/code&gt; standard.
+      </remarks>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.UsersController.#ctor(MediatR.IMediator)">
+            <summary>
+        Initializes a new instance of the <see cref="T:TicketFlow.API.Controllers.UsersController" /> class.
+      </summary><param name="mediator">The MediatR mediator instance used for dispatching user queries and commands.</param>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.UsersController.GetUsers(TicketFlow.Application.Features.Users.Queries.GetUsers.GetUsersQuery)">
+            <summary>
+        Retrieves a paginated and filterable list of all registered users in the system.
+      </summary><remarks>
+        Restricted to users in the &lt;b&gt;Admin&lt;/b&gt; role.
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Role Filter:&lt;/b&gt; Optional filter by user role: &lt;code&gt;Admin&lt;/code&gt; (0), &lt;code&gt;SupportAgent&lt;/code&gt; (1), &lt;code&gt;Customer&lt;/code&gt; (2).&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Search:&lt;/b&gt; Optional substring search matching against user display name or email address.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Pagination:&lt;/b&gt; &lt;code&gt;Page&lt;/code&gt; &amp;gt;= 1 (defaults to 1); &lt;code&gt;PageSize&lt;/code&gt; between 1 and 100 (defaults to 10).&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+      </remarks><param name="query">The query parameters including pagination options, optional role filter, and search keyword.</param><returns>A paginated collection of user summary DTOs, total records count, and pagination metadata.</returns><response code="200">Returns the paginated list of users matching the filter criteria.</response><response code="400">If pagination or query parameters fail validation (e.g., page &amp;lt; 1, pageSize outside 1..100, invalid role enum).</response><response code="401">If the request lacks a valid Bearer token.</response><response code="403">If the caller does not have the Admin role.</response>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.UsersController.GetUserById(System.Guid)">
+            <summary>
+        Retrieves the profile details of a specific user by their unique identifier.
+      </summary><remarks>
+        Restricted to users in the &lt;b&gt;Admin&lt;/b&gt; role.
+        Returns the user's ID, email address, display name, assigned role, active status, and account creation timestamp.
+      </remarks><param name="id">The unique identifier (GUID) of the target user.</param><returns>The user profile response DTO.</returns><response code="200">Returns the detailed profile of the requested user.</response><response code="400">If the provided ID is not a valid GUID format.</response><response code="401">If the request lacks a valid Bearer token.</response><response code="403">If the caller does not have the Admin role.</response><response code="404">If a user with the specified ID does not exist.</response>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.UsersController.CreateUser(TicketFlow.Application.Features.Users.Commands.CreateUser.CreateUserCommand)">
+            <summary>
+        Creates and provisions a new user account with a specified role.
+      </summary><remarks>
+        Restricted to users in the &lt;b&gt;Admin&lt;/b&gt; role.
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;Administrators can provision &lt;b&gt;Admin&lt;/b&gt;, &lt;b&gt;SupportAgent&lt;/b&gt;, or &lt;b&gt;Customer&lt;/b&gt; accounts.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;code&gt;EmailConfirmed&lt;/code&gt; is automatically set to &lt;code&gt;true&lt;/code&gt; for admin-created accounts.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Enforces Identity password complexity rules and uniqueness of email address.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Response includes a &lt;code&gt;Location&lt;/code&gt; header pointing to &lt;code&gt;GET /api/v1/users/{id}&lt;/code&gt;.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+      </remarks><param name="command">User creation command containing email, display name, temporary password, and assigned role.</param><returns>The newly created user profile response DTO.</returns><response code="201">User account was created successfully. Location header contains resource URI.</response><response code="400">If input payload fails validation (e.g., invalid email, password under 8 characters, or unrecognized role).</response><response code="401">If the request lacks a valid Bearer token.</response><response code="403">If the caller does not have the Admin role.</response><response code="409">If an account with the specified email address already exists.</response>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.UsersController.UpdateUser(System.Guid,TicketFlow.Application.Features.Users.DTOs.UpdateUserRequest)">
+            <summary>
+        Updates the profile information and active status of an existing user account.
+      </summary><remarks>
+        Restricted to users in the &lt;b&gt;Admin&lt;/b&gt; role.
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;Allows updating the user's &lt;code&gt;DisplayName&lt;/code&gt; (up to 100 characters).&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Allows enabling or disabling the account by toggling &lt;code&gt;IsActive&lt;/code&gt; (soft deletion). Deactivated users cannot log in.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+      </remarks><param name="id">The unique identifier (GUID) of the user to update.</param><param name="request">The update payload containing the new display name and desired active status.</param><returns>The updated user profile response DTO.</returns><response code="200">The user profile was updated successfully.</response><response code="400">If the update payload fails validation (e.g., blank display name or name exceeding 100 characters).</response><response code="401">If the request lacks a valid Bearer token.</response><response code="403">If the caller does not have the Admin role.</response><response code="404">If a user with the specified ID does not exist.</response>
+        </member>
+        <member name="M:TicketFlow.API.Controllers.UsersController.GetAgents(System.Int32,System.Int32)">
+            <summary>
+        Retrieves a paginated list of active Support Agents for ticket assignment.
+      </summary><remarks>
+        Restricted to users in the &lt;b&gt;Admin&lt;/b&gt; role.
+        Returns active users holding the &lt;code&gt;SupportAgent&lt;/code&gt; role, suitable for populating agent assignment dropdowns and managing workload distribution.
+      </remarks><param name="pageNumber">The 1-based page index (defaults to 1, must be &amp;gt;= 1).</param><param name="pageSize">The number of agents per page (defaults to 10, between 1 and 100).</param><returns>A paginated collection of support agent profiles and pagination metadata.</returns><response code="200">Returns the paginated list of support agents.</response><response code="400">If pagination parameters fail validation (e.g., pageNumber &amp;lt; 1, pageSize outside 1..100).</response><response code="401">If the request lacks a valid Bearer token.</response><response code="403">If the caller does not have the Admin role.</response>
+        </member>
+        <member name="T:TicketFlow.API.Exceptions.GlobalExceptionHandler">
+            <summary>
+        Global exception handler implementing <see cref="T:Microsoft.AspNetCore.Diagnostics.IExceptionHandler" /> to transform uncaught application exceptions into RFC 7807 compliant ProblemDetails responses.
+      </summary>
+        </member>
+        <member name="M:TicketFlow.API.Exceptions.GlobalExceptionHandler.#ctor(Microsoft.AspNetCore.Http.IProblemDetailsService,Microsoft.Extensions.Logging.ILogger{TicketFlow.API.Exceptions.GlobalExceptionHandler})">
+            <summary>
+        Initializes a new instance of the <see cref="T:TicketFlow.API.Exceptions.GlobalExceptionHandler" /> class.
+      </summary><param name="problemDetailsService">The service responsible for serializing RFC 7807 problem details to the HTTP response.</param><param name="logger">The logger used for recording diagnostic messages and application errors.</param>
+        </member>
+        <member name="M:TicketFlow.API.Exceptions.GlobalExceptionHandler.TryHandleAsync(Microsoft.AspNetCore.Http.HttpContext,System.Exception,System.Threading.CancellationToken)">
+            <summary>
+        Attempts to handle an unhandled exception by mapping it to an appropriate HTTP status code and writing an RFC 7807 ProblemDetails payload.
+      </summary><param name="httpContext">The current HTTP request context.</param><param name="exception">The unhandled exception thrown by an endpoint or pipeline behavior.</param><param name="cancellationToken">The cancellation token.</param><returns>A <see cref="T:System.Threading.Tasks.ValueTask`1" /> indicating whether the exception was handled successfully.</returns>
+        </member>
+        <member name="T:TicketFlow.API.Services.CurrentUserService">
+            <summary>
+        Resolves information and claims for the currently authenticated user from the active HTTP request context.
+      </summary>
+        </member>
+        <member name="M:TicketFlow.API.Services.CurrentUserService.#ctor(Microsoft.AspNetCore.Http.IHttpContextAccessor)">
+            <summary>
+        Initializes a new instance of the <see cref="T:TicketFlow.API.Services.CurrentUserService" /> class.
+      </summary><param name="httpContextAccessor">The accessor used to inspect the current HTTP context and user claims principal.</param>
+        </member>
+        <member name="P:TicketFlow.API.Services.CurrentUserService.UserId">
+            <summary>
+            Gets the current authenticated user's unique identifier.
+            Returns Guid.Empty if the user is unauthenticated or has no valid ID claim.
+            </summary>
+        </member>
+        <member name="P:TicketFlow.API.Services.CurrentUserService.Role">
+            <summary>
+            Gets the current authenticated user's role (e.g. Admin, SupportAgent, Customer).
+            Returns string.Empty if unauthenticated.
+            </summary>
+        </member>
+        <member name="T:TicketFlow.API.StartupExtensions.ConfigureServiceCollection">
+            <summary>
+        Provides extension methods for registering and configuring application services, middleware, security, and infrastructure in the dependency injection container.
+      </summary>
+        </member>
+        <member name="M:TicketFlow.API.StartupExtensions.ConfigureServiceCollection.ConfigureServices(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Configuration.IConfiguration)">
+            <summary>
+        Registers and configures all core API services including controllers, exception handling, rate limiting, JWT authentication, authorization policies, CORS, Swagger, and API versioning.
+      </summary><param name="services">The <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection" /> to add services to.</param><param name="configuration">The application <see cref="T:Microsoft.Extensions.Configuration.IConfiguration" /> containing connection strings, JWT settings, and CORS policies.</param><returns>The configured <see cref="T:Microsoft.Extensions.DependencyInjection.IServiceCollection" /> instance for chaining.</returns>
+        </member>
+    </members>
+</doc>

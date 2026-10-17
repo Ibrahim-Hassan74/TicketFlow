@@ -1,0 +1,61 @@
+using TicketFlow.Domain.IdentityEntities;
+using TicketFlow.Domain.Enums;
+using TicketFlow.Domain.Exceptions;
+
+namespace TicketFlow.Domain.Entities
+{
+    public class Ticket
+    {
+        public Guid Id { get; set; }
+
+        public string Title { get; set; } = string.Empty;
+
+        public string Description { get; set; } = string.Empty;
+
+        public TicketStatus Status { get; set; } = TicketStatus.Open;
+
+        public TicketPriority Priority { get; set; } = TicketPriority.Medium;
+
+        public Guid CustomerId { get; set; }
+
+        public Guid? AssignedAgentId { get; set; }
+
+        public DateTimeOffset CreatedAt { get; set; }
+
+        public DateTimeOffset UpdatedAt { get; set; }
+
+        public DateTimeOffset? ResolvedAt { get; set; }
+
+        public DateTimeOffset? ClosedAt { get; set; }
+
+        public byte[] RowVersion { get; set; } = null!;
+
+        // Navigation properties
+        public ApplicationUser Customer { get; set; } = null!;
+
+        public ApplicationUser? AssignedAgent { get; set; }
+
+        public ICollection<TicketComment> Comments { get; set; } = new List<TicketComment>();
+
+        public ICollection<TicketActivity> Activities { get; set; } = new List<TicketActivity>();
+
+        public ICollection<TimeEntry> TimeEntries { get; set; } = new List<TimeEntry>();
+
+        public void AssignAgent(Guid agentId)
+        {
+            if (Status == TicketStatus.Closed)
+            {
+                throw new DomainValidationException("Cannot assign an agent to a ticket that is already closed.");
+            }
+            AssignedAgentId = agentId;
+        }
+
+        public bool CanBeAccessedBy(Guid userId, string role)
+        {
+            if (role == UserRole.Admin.ToString()) return true;
+            if (role == UserRole.SupportAgent.ToString()) return AssignedAgentId == userId;
+            if (role == UserRole.Customer.ToString()) return CustomerId == userId;
+            return false;
+        }
+    }
+}
