@@ -1,0 +1,13 @@
+﻿using TicketFlow.Domain.Enums;
+
+namespace TicketFlow.Application.Features.Tickets.DTOs
+{
+    public class CreateTicketRequest
+    {
+        public string Title { get; set; } = string.Empty;
+
+        public string Description { get; set; } = string.Empty;
+
+        public TicketPriority Priority { get; set; } = TicketPriority.Medium;
+    }
+}

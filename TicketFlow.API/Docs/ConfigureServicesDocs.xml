@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<docs>
+  <members name="ConfigureServiceCollection">
+    <Class>
+      <summary>
+        Provides extension methods for registering and configuring application services, middleware, security, and infrastructure in the dependency injection container.
+      </summary>
+    </Class>
+
+    <ConfigureServices>
+      <summary>
+        Registers and configures all core API services including controllers, exception handling, rate limiting, JWT authentication, authorization policies, CORS, Swagger, and API versioning.
+      </summary>
+      <param name="services">The <see cref="Microsoft.Extensions.DependencyInjection.IServiceCollection"/> to add services to.</param>
+      <param name="configuration">The application <see cref="Microsoft.Extensions.Configuration.IConfiguration"/> containing connection strings, JWT settings, and CORS policies.</param>
+      <returns>The configured <see cref="Microsoft.Extensions.DependencyInjection.IServiceCollection"/> instance for chaining.</returns>
+    </ConfigureServices>
+  </members>
+</docs>
