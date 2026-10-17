@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<docs>
+  <members name="CurrentUserService">
+    <Class>
+      <summary>
+        Resolves information and claims for the currently authenticated user from the active HTTP request context.
+      </summary>
+    </Class>
+
+    <Constructor>
+      <summary>
+        Initializes a new instance of the <see cref="TicketFlow.API.Services.CurrentUserService"/> class.
+      </summary>
+      <param name="httpContextAccessor">The accessor used to inspect the current HTTP context and user claims principal.</param>
+    </Constructor>
+
+    <UserId>
+      <summary>
+        Gets the unique identifier (GUID) of the authenticated user from the JWT claim. Returns <see cref="System.Guid.Empty"/> if unauthenticated.
+      </summary>
+    </UserId>
+
+    <Role>
+      <summary>
+        Gets the primary role name (e.g., Admin, SupportAgent, Customer) of the authenticated user. Returns empty string if unauthenticated.
+      </summary>
+    </Role>
+  </members>
+</docs>

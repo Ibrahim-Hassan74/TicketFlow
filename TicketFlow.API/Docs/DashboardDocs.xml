@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<docs>
+  <members name="DashboardController">
+    <Class>
+      <summary>
+        Controller responsible for aggregating system-wide analytics, key performance indicators (KPIs), workload metrics, and ticket trends.
+      </summary>
+      <remarks>
+        All endpoints in this controller are strictly restricted to users in the &lt;b&gt;Admin&lt;/b&gt; role.
+        Designed for administrative reporting, monitoring operational throughput, and agent capacity tracking.
+      </remarks>
+    </Class>
+
+    <Constructor>
+      <summary>
+        Initializes a new instance of the <see cref="TicketFlow.API.Controllers.DashboardController"/> class.
+      </summary>
+      <param name="mediator">The MediatR mediator instance used for dispatching dashboard analytics queries.</param>
+      <param name="currentUserService">The service used to obtain the current authenticated user's ID and role from JWT claims.</param>
+    </Constructor>
+
+    <GetStats>
+      <summary>
+        Retrieves high-level system statistics, ticket status breakdowns, and resolution performance indicators.
+      </summary>
+      <remarks>
+        Restricted exclusively to users in the &lt;b&gt;Admin&lt;/b&gt; role.
+        Returns:
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;TotalTickets:&lt;/b&gt; Overall count of tickets in the system.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;OpenTickets:&lt;/b&gt; Tickets currently in the Open state waiting for investigation.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;InProgressTickets:&lt;/b&gt; Tickets currently actively being worked on by assigned agents.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;ResolvedTickets:&lt;/b&gt; Tickets resolved by support agents waiting for customer review.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;ClosedTickets:&lt;/b&gt; Tickets fully closed.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;CriticalOpenTickets:&lt;/b&gt; Unresolved tickets with Critical priority requiring immediate attention.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;AverageResolutionTimeHours:&lt;/b&gt; Mean turnaround duration from creation to resolution in hours.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+      </remarks>
+      <returns>The aggregate dashboard KPI statistics response DTO.</returns>
+      <response code="200">Returns the system KPI summary statistics.</response>
+      <response code="401">If the request lacks a valid Bearer token.</response>
+      <response code="403">If the caller does not have the Admin role.</response>
+    </GetStats>
+
+    <GetAgentWorkload>
+      <summary>
+        Retrieves real-time workload distribution and operational throughput across all Support Agents.
+      </summary>
+      <remarks>
+        Restricted exclusively to users in the &lt;b&gt;Admin&lt;/b&gt; role.
+        Provides a per-agent breakdown:
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;Agent GUID, DisplayName, and Email.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;AssignedTickets:&lt;/b&gt; Number of currently active tickets assigned to this agent.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;TotalMinutesLogged:&lt;/b&gt; Cumulative work minutes logged across all tickets.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+        Useful for balancing queue workloads and identifying overloaded or underutilized agents.
+      </remarks>
+      <returns>A list of agent workload response objects.</returns>
+      <response code="200">Returns the agent workload distribution metrics.</response>
+      <response code="401">If the request lacks a valid Bearer token.</response>
+      <response code="403">If the caller does not have the Admin role.</response>
+    </GetAgentWorkload>
+
+    <GetTicketTrends>
+      <summary>
+        Retrieves daily ticket volume trends (created vs. closed) over a specified historical lookback period.
+      </summary>
+      <remarks>
+        Restricted exclusively to users in the &lt;b&gt;Admin&lt;/b&gt; role.
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Lookback Range:&lt;/b&gt; &lt;code&gt;days&lt;/code&gt; parameter must be between 1 and 365 (defaults to 30).&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Returns chronological daily buckets with date, count of created tickets, and count of closed tickets.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Powers visual time-series charts on the admin analytics dashboard.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+      </remarks>
+      <param name="days">The number of days to look back for trend analysis (1 to 365, default is 30).</param>
+      <returns>A list of daily trend data points with date, created count, and closed count.</returns>
+      <response code="200">Returns the daily historical trend data points.</response>
+      <response code="400">If the days parameter is less than 1 or greater than 365.</response>
+      <response code="401">If the request lacks a valid Bearer token.</response>
+      <response code="403">If the caller does not have the Admin role.</response>
+    </GetTicketTrends>
+  </members>
+</docs>

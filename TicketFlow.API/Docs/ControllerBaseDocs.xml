@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<docs>
+  <members name="CustomControllerBase">
+    <Class>
+      <summary>
+        Base controller for the TicketFlow Web API, providing shared routing and MediatR dispatching capabilities.
+      </summary>
+    </Class>
+
+    <FieldMediator>
+      <summary>
+        The MediatR mediator instance used by derived controllers to dispatch commands and queries.
+      </summary>
+    </FieldMediator>
+
+    <Constructor>
+      <summary>
+        Initializes a new instance of the <see cref="TicketFlow.API.Controllers.CustomControllerBase"/> class.
+      </summary>
+      <param name="mediator">The MediatR mediator instance.</param>
+    </Constructor>
+  </members>
+</docs>

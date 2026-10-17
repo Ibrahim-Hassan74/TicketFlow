@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<docs>
+  <members name="GlobalExceptionHandler">
+    <Class>
+      <summary>
+        Global exception handler implementing <see cref="Microsoft.AspNetCore.Diagnostics.IExceptionHandler"/> to transform uncaught application exceptions into RFC 7807 compliant ProblemDetails responses.
+      </summary>
+    </Class>
+
+    <Constructor>
+      <summary>
+        Initializes a new instance of the <see cref="TicketFlow.API.Exceptions.GlobalExceptionHandler"/> class.
+      </summary>
+      <param name="problemDetailsService">The service responsible for serializing RFC 7807 problem details to the HTTP response.</param>
+      <param name="logger">The logger used for recording diagnostic messages and application errors.</param>
+    </Constructor>
+
+    <TryHandleAsync>
+      <summary>
+        Attempts to handle an unhandled exception by mapping it to an appropriate HTTP status code and writing an RFC 7807 ProblemDetails payload.
+      </summary>
+      <param name="httpContext">The current HTTP request context.</param>
+      <param name="exception">The unhandled exception thrown by an endpoint or pipeline behavior.</param>
+      <param name="cancellationToken">The cancellation token.</param>
+      <returns>A <see cref="System.Threading.Tasks.ValueTask{Boolean}"/> indicating whether the exception was handled successfully.</returns>
+    </TryHandleAsync>
+  </members>
+</docs>
