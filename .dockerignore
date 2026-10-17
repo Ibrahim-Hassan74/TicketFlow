@@ -16,8 +16,9 @@
 **/*.suo
 
 # Test projects (not needed in production image)
-**/SupportTicketManagement.ServiceTests
-**/SupportTicketManagement.ControllerTests
+**/TicketFlow.API.Tests
+**/TicketFlow.Application.Tests
+**/TicketFlow.IntegrationTests
 
 # Documentation & community files
 **/*.md

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<docs>
+  <members name="AccountController">
+    <Class>
+      <summary>
+        Controller responsible for user authentication, account registration, token lifecycle management, and profile retrieval.
+      </summary>
+      <remarks>
+        Implements JWT Bearer authentication with short-lived access tokens and database-backed refresh tokens.
+        All validation and authentication errors return RFC 7807 &lt;code&gt;ProblemDetails&lt;/code&gt; responses.
+      </remarks>
+    </Class>
+
+    <Constructor>
+      <summary>
+        Initializes a new instance of the <see cref="TicketFlow.API.Controllers.AccountController"/> class.
+      </summary>
+      <param name="mediator">The MediatR mediator instance used for dispatching authentication commands and queries.</param>
+      <param name="currentUserService">The service used to obtain the current authenticated user ID and role from JWT claims.</param>
+    </Constructor>
+
+    <PostRegister>
+      <summary>
+        Registers a new customer account in the system.
+      </summary>
+      <remarks>
+        Public endpoint accessible to unauthenticated guests (&lt;code&gt;NotAuthorized&lt;/code&gt; policy).
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;Automatically assigns the &lt;b&gt;Customer&lt;/b&gt; role to newly registered users.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Password Requirements:&lt;/b&gt; Minimum 8 characters, at least one uppercase letter, one lowercase letter, and one digit.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Email &amp;amp; Username Uniqueness:&lt;/b&gt; Enforces unique email and username across the system.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+      </remarks>
+      <param name="command">The registration command containing username, email, phone number, password, and password confirmation.</param>
+      <returns>The registration result details including user ID, username, email, and assigned customer role.</returns>
+      <response code="200">Registration succeeded and the new customer account was created.</response>
+      <response code="400">If input validation fails (e.g., passwords do not match, email format is invalid, phone contains non-digits, or password complexity rules are not met).</response>
+      <response code="409">If an account with the specified email or username already exists.</response>
+    </PostRegister>
+
+    <PostLogin>
+      <summary>
+        Authenticates user credentials and issues a signed JWT access token and refresh token.
+      </summary>
+      <remarks>
+        Public endpoint accessible to unauthenticated guests (&lt;code&gt;NotAuthorized&lt;/code&gt; policy).
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;Validates email and password against ASP.NET Core Identity store.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Generates a cryptographically secure JWT access token with role, ID, and email claims.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Issues a database-stored refresh token with configurable expiration.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;&lt;b&gt;Lockout Protection:&lt;/b&gt; Accounts are automatically locked out after 5 consecutive failed attempts.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+      </remarks>
+      <param name="command">The login payload containing user email and password credentials.</param>
+      <returns>An authentication response containing the JWT bearer access token, expiration datetime, and refresh token.</returns>
+      <response code="200">Authentication successful. Returns the JWT access token and refresh token.</response>
+      <response code="400">If required fields are missing or email format is invalid.</response>
+      <response code="401">If the email/password combination is incorrect.</response>
+      <response code="403">If the account has been deactivated or disabled by an administrator.</response>
+      <response code="404">If no user exists with the provided email.</response>
+      <response code="423">If the user account is temporarily locked due to multiple consecutive failed login attempts.</response>
+    </PostLogin>
+
+    <RefreshToken>
+      <summary>
+        Exchanges an expired JWT access token and a valid refresh token for a newly generated token pair.
+      </summary>
+      <remarks>
+        Public endpoint allowing clients to renew expired sessions without re-entering credentials.
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;Validates the cryptographic signature of the expired JWT token (ignoring its lifetime).&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Verifies the provided refresh token matches the active token stored in the database and is not expired.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Issues a new access token and a rotated refresh token to prevent replay attacks.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+      </remarks>
+      <param name="command">The token renewal payload containing the expired access token and matching refresh token.</param>
+      <returns>An authentication response containing the renewed JWT access token and updated refresh token.</returns>
+      <response code="200">Tokens refreshed successfully.</response>
+      <response code="400">If the refresh token is missing, expired, revoked, or fails validation against the user account.</response>
+      <response code="404">If the user associated with the token claims no longer exists.</response>
+    </RefreshToken>
+
+    <PostLogout>
+      <summary>
+        Terminates the authenticated user session and revokes the active refresh token.
+      </summary>
+      <remarks>
+        Requires a valid Bearer token.
+        &lt;list type="bullet"&gt;
+          &lt;item&gt;&lt;description&gt;Extracts the authenticated user ID from JWT claims.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Clears the stored refresh token in the database, preventing future token renewals.&lt;/description&gt;&lt;/item&gt;
+          &lt;item&gt;&lt;description&gt;Signs out the user session via Identity SignInManager.&lt;/description&gt;&lt;/item&gt;
+        &lt;/list&gt;
+      </remarks>
+      <returns>No content on success.</returns>
+      <response code="204">Logout succeeded and refresh token revoked.</response>
+      <response code="401">If the request lacks a valid Bearer token or the token has expired.</response>
+    </PostLogout>
+
+    <GetCurrentUser>
+      <summary>
+        Retrieves the profile and account details of the currently authenticated user.
+      </summary>
+      <remarks>
+        Requires a valid Bearer token.
+        Extracts user ID directly from JWT claims (&lt;code&gt;NameIdentifier&lt;/code&gt;) and queries account status, display name, email, and assigned role.
+      </remarks>
+      <returns>The user profile response DTO containing user ID, display name, email, role, and active status.</returns>
+      <response code="200">Returns the authenticated user profile.</response>
+      <response code="401">If the request lacks a valid Bearer token.</response>
+      <response code="404">If the user account could not be found in the database.</response>
+    </GetCurrentUser>
+  </members>
+</docs>
