@@ -1,6 +1,275 @@
-@SupportTicketManagement.API_HostAddress = http://localhost:5086
+# ==============================================================================
+# TicketFlow Web API - REST Client Request Collection
+# Compatible with Visual Studio REST Client and VS Code REST Client Extension
+# ==============================================================================
 
-GET {{SupportTicketManagement.API_HostAddress}}/weatherforecast/
+@baseUrl = http://localhost:5086
+@apiVersion = v1
+
+# ------------------------------------------------------------------------------
+# Pre-Configured Seed User Credentials
+# ------------------------------------------------------------------------------
+# Admin:         admin1@example.com      | Aa1234567
+# Support Agent: agent1@example.com      | Aa1234567
+# Customer:      customer1@example.com   | Aa1234567
+# ------------------------------------------------------------------------------
+
+# Placeholders for JWT tokens after logging in
+@adminToken = 
+@agentToken = 
+@customerToken = 
+
+# Resource ID Placeholders (populate after creating resources)
+@ticketId = 00000000-0000-0000-0000-000000000000
+@agentId = 00000000-0000-0000-0000-000000000000
+@userId = 00000000-0000-0000-0000-000000000000
+
+
+# ==============================================================================
+# 1. AUTHENTICATION & ACCOUNT ENDPOINTS
+# ==============================================================================
+
+### 1.1 Register a New Customer Account
+POST {{baseUrl}}/api/{{apiVersion}}/account/register
+Content-Type: application/json
+
+{
+  "email": "newcustomer@example.com",
+  "password": "Password123!",
+  "confirmPassword": "Password123!",
+  "displayName": "New Customer"
+}
+
+### 1.2 Login as Administrator (Copies JWT token in response)
+# @name adminLogin
+POST {{baseUrl}}/api/{{apiVersion}}/account/login
+Content-Type: application/json
+
+{
+  "email": "admin1@example.com",
+  "password": "Aa1234567"
+}
+
+### 1.3 Login as Support Agent
+# @name agentLogin
+POST {{baseUrl}}/api/{{apiVersion}}/account/login
+Content-Type: application/json
+
+{
+  "email": "agent1@example.com",
+  "password": "Aa1234567"
+}
+
+### 1.4 Login as Customer
+# @name customerLogin
+POST {{baseUrl}}/api/{{apiVersion}}/account/login
+Content-Type: application/json
+
+{
+  "email": "customer1@example.com",
+  "password": "Aa1234567"
+}
+
+### 1.5 Generate New JWT Access Token via Refresh Token
+POST {{baseUrl}}/api/{{apiVersion}}/account/generate-new-jwt-token
+Content-Type: application/json
+
+{
+  "token": "{{adminLogin.response.body.token}}",
+  "refreshToken": "{{adminLogin.response.body.refreshToken}}"
+}
+
+### 1.6 Get Current Authenticated User Profile
+GET {{baseUrl}}/api/{{apiVersion}}/account/me
+Authorization: Bearer {{adminLogin.response.body.token}}
 Accept: application/json
 
-###
+### 1.7 Logout (Revoke Refresh Token)
+POST {{baseUrl}}/api/{{apiVersion}}/account/logout
+Authorization: Bearer {{adminLogin.response.body.token}}
+
+
+# ==============================================================================
+# 2. TICKETS MANAGEMENT ENDPOINTS
+# ==============================================================================
+
+### 2.1 Create Ticket (Customer Role Required)
+# Priority: 0 = Low, 1 = Medium, 2 = High, 3 = Critical
+# @name createTicket
+POST {{baseUrl}}/api/{{apiVersion}}/tickets
+Authorization: Bearer {{customerLogin.response.body.token}}
+Content-Type: application/json
+
+{
+  "title": "Cannot access billing invoices from dashboard",
+  "description": "Whenever I click on the billing tab, a 500 error appears. Please investigate.",
+  "priority": 2
+}
+
+### 2.2 Get Tickets (Paginated, Search, Filters, Dynamic Sorting)
+# Query Parameters:
+# - status: 0 (Open), 1 (InProgress), 2 (Resolved), 3 (Closed)
+# - priority: 0 (Low), 1 (Medium), 2 (High), 3 (Critical)
+# - sortBy: CreatedAt, Priority, Status, UpdatedAt
+# - sortOrder: Ascending, Descending
+# - page: Page number (starts at 1)
+# - pageSize: Items per page
+GET {{baseUrl}}/api/{{apiVersion}}/tickets?page=1&pageSize=10&sortBy=CreatedAt&sortOrder=Descending&search=billing
+Authorization: Bearer {{adminLogin.response.body.token}}
+Accept: application/json
+
+### 2.3 Get Ticket by ID (Includes Comments, Activities & Time Entries)
+GET {{baseUrl}}/api/{{apiVersion}}/tickets/{{createTicket.response.body.id}}
+Authorization: Bearer {{adminLogin.response.body.token}}
+Accept: application/json
+
+### 2.4 Update Ticket Title & Description (Admin Only)
+PUT {{baseUrl}}/api/{{apiVersion}}/tickets/{{createTicket.response.body.id}}
+Authorization: Bearer {{adminLogin.response.body.token}}
+Content-Type: application/json
+
+{
+  "title": "Cannot access billing invoices from dashboard (Updated)",
+  "description": "Updated issue description with additional diagnostic details."
+}
+
+### 2.5 Update Ticket Status (Allowed Transitions: Open -> InProgress -> Resolved -> Closed)
+# Status: 0 = Open, 1 = InProgress, 2 = Resolved, 3 = Closed
+PATCH {{baseUrl}}/api/{{apiVersion}}/tickets/{{createTicket.response.body.id}}/status
+Authorization: Bearer {{agentLogin.response.body.token}}
+Content-Type: application/json
+
+{
+  "status": 1
+}
+
+### 2.6 Update Ticket Priority (Admin Only)
+# Priority: 0 = Low, 1 = Medium, 2 = High, 3 = Critical
+PATCH {{baseUrl}}/api/{{apiVersion}}/tickets/{{createTicket.response.body.id}}/priority
+Authorization: Bearer {{adminLogin.response.body.token}}
+Content-Type: application/json
+
+{
+  "priority": 3
+}
+
+### 2.7 Assign Ticket to Support Agent (Admin Only)
+PATCH {{baseUrl}}/api/{{apiVersion}}/tickets/{{createTicket.response.body.id}}/assign
+Authorization: Bearer {{adminLogin.response.body.token}}
+Content-Type: application/json
+
+{
+  "agentId": "{{agentId}}"
+}
+
+
+# ==============================================================================
+# 3. TICKET COMMENTS ENDPOINTS
+# ==============================================================================
+
+### 3.1 Add Comment to Ticket
+POST {{baseUrl}}/api/{{apiVersion}}/tickets/{{createTicket.response.body.id}}/comments
+Authorization: Bearer {{customerLogin.response.body.token}}
+Content-Type: application/json
+
+{
+  "content": "I tried clearing browser cookies as well, but the issue still persists."
+}
+
+### 3.2 Get Discussion Comments for Ticket
+GET {{baseUrl}}/api/{{apiVersion}}/tickets/{{createTicket.response.body.id}}/comments
+Authorization: Bearer {{agentLogin.response.body.token}}
+Accept: application/json
+
+
+# ==============================================================================
+# 4. TICKET ACTIVITY AUDIT TRAIL ENDPOINTS
+# ==============================================================================
+
+### 4.1 Get Activity Audit Trail for Ticket
+GET {{baseUrl}}/api/{{apiVersion}}/tickets/{{createTicket.response.body.id}}/activities
+Authorization: Bearer {{customerLogin.response.body.token}}
+Accept: application/json
+
+
+# ==============================================================================
+# 5. TIME TRACKING ENDPOINTS
+# ==============================================================================
+
+### 5.1 Log Work Time Entry (Support Agent Only)
+POST {{baseUrl}}/api/{{apiVersion}}/tickets/{{createTicket.response.body.id}}/time-entries
+Authorization: Bearer {{agentLogin.response.body.token}}
+Content-Type: application/json
+
+{
+  "workDate": "2026-10-17",
+  "durationMinutes": 45,
+  "description": "Reviewed server logs and diagnosed database timeout on billing query."
+}
+
+### 5.2 Get Logged Time Entries for Ticket (Agent or Admin)
+GET {{baseUrl}}/api/{{apiVersion}}/tickets/{{createTicket.response.body.id}}/time-entries
+Authorization: Bearer {{adminLogin.response.body.token}}
+Accept: application/json
+
+
+# ==============================================================================
+# 6. DASHBOARD & REPORTING METRICS (ADMIN ONLY)
+# ==============================================================================
+
+### 6.1 Get System Overview Statistics
+GET {{baseUrl}}/api/{{apiVersion}}/dashboard/stats
+Authorization: Bearer {{adminLogin.response.body.token}}
+Accept: application/json
+
+### 6.2 Get Support Agent Workload Distribution
+GET {{baseUrl}}/api/{{apiVersion}}/dashboard/agent-workload
+Authorization: Bearer {{adminLogin.response.body.token}}
+Accept: application/json
+
+### 6.3 Get Daily Ticket Trends (Rolling Days Window)
+GET {{baseUrl}}/api/{{apiVersion}}/dashboard/ticket-trends?days=30
+Authorization: Bearer {{adminLogin.response.body.token}}
+Accept: application/json
+
+
+# ==============================================================================
+# 7. USER ADMINISTRATION ENDPOINTS (ADMIN ONLY)
+# ==============================================================================
+
+### 7.1 List System Users (Paginated, Filtered by Role & Search)
+GET {{baseUrl}}/api/{{apiVersion}}/users?page=1&pageSize=10&role=SupportAgent&search=agent
+Authorization: Bearer {{adminLogin.response.body.token}}
+Accept: application/json
+
+### 7.2 Get User by ID
+GET {{baseUrl}}/api/{{apiVersion}}/users/{{userId}}
+Authorization: Bearer {{adminLogin.response.body.token}}
+Accept: application/json
+
+### 7.3 Create Internal User Account (Admin or SupportAgent)
+POST {{baseUrl}}/api/{{apiVersion}}/users
+Authorization: Bearer {{adminLogin.response.body.token}}
+Content-Type: application/json
+
+{
+  "email": "agent2@example.com",
+  "password": "Password123!",
+  "displayName": "Agent Two",
+  "role": "SupportAgent"
+}
+
+### 7.4 Update User Display Name & Active Status
+PUT {{baseUrl}}/api/{{apiVersion}}/users/{{userId}}
+Authorization: Bearer {{adminLogin.response.body.token}}
+Content-Type: application/json
+
+{
+  "displayName": "Agent Two (Senior)",
+  "isActive": true
+}
+
+### 7.5 Get Active Support Agents for Ticket Assignment
+GET {{baseUrl}}/api/{{apiVersion}}/users/agents?pageNumber=1&pageSize=10
+Authorization: Bearer {{adminLogin.response.body.token}}
+Accept: application/json

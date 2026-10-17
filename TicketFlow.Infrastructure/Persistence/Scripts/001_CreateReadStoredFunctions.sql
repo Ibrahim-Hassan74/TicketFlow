@@ -180,7 +180,7 @@ BEGIN
         u."DisplayName"::TEXT AS "DisplayName",
         COALESCE(r."Name", '')::TEXT AS "Role",
         (NOT u."IsDeleted") AS "IsActive",
-        u."CreatedAt",
+        COALESCE(NULLIF(u."CreatedAt", '0001-01-01 00:00:00+00'::TIMESTAMPTZ), CURRENT_TIMESTAMP) AS "CreatedAt",
         COUNT(*) OVER() AS "TotalCount"
     FROM "AspNetUsers" u
     LEFT JOIN "AspNetUserRoles" ur ON ur."UserId" = u."Id"
@@ -219,7 +219,7 @@ BEGIN
         u."DisplayName"::TEXT AS "DisplayName",
         'SupportAgent'::TEXT AS "Role",
         (NOT u."IsDeleted") AS "IsActive",
-        u."CreatedAt",
+        COALESCE(NULLIF(u."CreatedAt", '0001-01-01 00:00:00+00'::TIMESTAMPTZ), CURRENT_TIMESTAMP) AS "CreatedAt",
         COUNT(*) OVER() AS "TotalCount"
     FROM "AspNetUsers" u
     INNER JOIN "AspNetUserRoles" ur ON ur."UserId" = u."Id"
