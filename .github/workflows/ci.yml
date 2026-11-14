@@ -85,6 +85,13 @@ jobs:
       - name: Run Integration Tests
         env:
           ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=ticketflow_test;Username=ticketflow;Password=StrongTestPassword123;"
+          Jwt__Key: ${{ secrets.JWT_KEY }}
+          Jwt__Issuer: "https://localhost:7235"
+          Jwt__Audiences__0: "https://localhost:4200"
+          Jwt__Audiences__1: "postman-client"
+          Jwt__EXPIRATION_MINUTES: "30"
+          RefreshToken__EXPIRATION_MINUTES: "500"
+          RefreshToken__LONG_EXPIRATION_MINUTES: "2880"
         run: dotnet test TicketFlow.IntegrationTests/TicketFlow.IntegrationTests.csproj --configuration Release --no-build --verbosity normal
 
   # Job 3: Docker Build Verification
