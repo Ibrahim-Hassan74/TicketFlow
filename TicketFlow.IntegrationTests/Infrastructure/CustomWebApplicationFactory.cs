@@ -10,6 +10,7 @@ namespace TicketFlow.IntegrationTests.Infrastructure
 {
     public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     {
+        private static readonly SemaphoreSlim _roleLock = new(1, 1);
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment("Testing");
@@ -41,9 +42,17 @@ namespace TicketFlow.IntegrationTests.Infrastructure
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
 
             var normalizedRole = role.Trim();
-            if (!await roleManager.RoleExistsAsync(normalizedRole))
+            await _roleLock.WaitAsync();
+            try
             {
-                await roleManager.CreateAsync(new ApplicationRole { Name = normalizedRole });
+                if (!await roleManager.RoleExistsAsync(normalizedRole))
+                {
+                    await roleManager.CreateAsync(new ApplicationRole { Name = normalizedRole });
+                }
+            }
+            finally
+            {
+                _roleLock.Release();
             }
 
             var uniqueEmail = email ?? $"{normalizedRole.ToLower()}_{Guid.NewGuid():N}@testflow.com";
