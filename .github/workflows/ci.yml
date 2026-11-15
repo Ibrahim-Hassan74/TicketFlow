@@ -51,7 +51,7 @@ jobs:
         env:
           POSTGRES_DB: ticketflow_test
           POSTGRES_USER: ticketflow
-          POSTGRES_PASSWORD: StrongTestPassword123!
+          POSTGRES_PASSWORD: StrongTestPassword123
         ports:
           - 5432:5432
         options: >-
@@ -77,7 +77,7 @@ jobs:
 
       - name: Initialize PostgreSQL Database
         env:
-          PGPASSWORD: StrongTestPassword123!
+          PGPASSWORD: StrongTestPassword123
         run: |
           psql -h localhost -p 5432 -U ticketflow -d ticketflow_test -f TicketFlow.Infrastructure/Persistence/Scripts/000_FullPostgreSQLInit.sql
           psql -h localhost -p 5432 -U ticketflow -d ticketflow_test -f TicketFlow.Infrastructure/Persistence/Scripts/001_CreateReadStoredFunctions.sql
