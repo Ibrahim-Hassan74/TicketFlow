@@ -1,5 +1,5 @@
 # ========== BUILD STAGE ==========
-FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Copy project files first (for layer caching)
@@ -24,7 +24,7 @@ RUN dotnet publish TicketFlow.API/TicketFlow.API.csproj \
     --no-restore
 
 # ========== RUNTIME STAGE ==========
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-preview AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
 # Install curl for health checks

@@ -1,0 +1,116 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: ["master", "develop"]
+  pull_request:
+    branches: ["master", "develop"]
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: "10.0.x"
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+
+jobs:
+  # Job 1: Build & Unit Tests
+  build-and-unit-tests:
+    name: Build & Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v6.1.0
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore TicketFlow.slnx
+
+      - name: Build Solution
+        run: dotnet build TicketFlow.slnx --configuration Release --no-restore
+
+      - name: Run Application Unit Tests
+        run: dotnet test TicketFlow.Application.Tests/TicketFlow.Application.Tests.csproj --configuration Release --no-build --verbosity normal
+
+      - name: Run API Unit Tests
+        run: dotnet test TicketFlow.API.Tests/TicketFlow.API.Tests.csproj --configuration Release --no-build --verbosity normal
+
+  # Job 2: Integration Tests (with PostgreSQL service)
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: build-and-unit-tests
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: ticketflow_test
+          POSTGRES_USER: ticketflow
+          POSTGRES_PASSWORD: StrongTestPassword123
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v6.1.0
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore TicketFlow.slnx
+
+      - name: Build Solution
+        run: dotnet build TicketFlow.slnx --configuration Release --no-restore
+
+      - name: Initialize PostgreSQL Database
+        env:
+          PGPASSWORD: StrongTestPassword123
+        run: |
+          psql -h localhost -p 5432 -U ticketflow -d ticketflow_test -f TicketFlow.Infrastructure/Persistence/Scripts/000_FullPostgreSQLInit.sql
+          psql -h localhost -p 5432 -U ticketflow -d ticketflow_test -f TicketFlow.Infrastructure/Persistence/Scripts/001_CreateReadStoredFunctions.sql
+
+      - name: Run Integration Tests
+        env:
+          ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=ticketflow_test;Username=ticketflow;Password=StrongTestPassword123;"
+          Jwt__Key: ${{ secrets.JWT_KEY }}
+          Jwt__Issuer: "https://localhost:7235"
+          Jwt__Audiences__0: "https://localhost:4200"
+          Jwt__Audiences__1: "postman-client"
+          Jwt__EXPIRATION_MINUTES: "30"
+          RefreshToken__EXPIRATION_MINUTES: "500"
+          RefreshToken__LONG_EXPIRATION_MINUTES: "2880"
+        run: dotnet test TicketFlow.IntegrationTests/TicketFlow.IntegrationTests.csproj --configuration Release --no-build --verbosity normal
+
+  # Job 3: Docker Build Verification
+  docker-build:
+    name: Verify Docker Build
+    runs-on: ubuntu-latest
+    needs: [build-and-unit-tests, integration-tests]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4.4.1
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v7.4.0
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: ticketflow-api:test
