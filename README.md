@@ -2,6 +2,8 @@
 
 [![.NET 10](https://img.shields.io/badge/.NET-10.0%20(Preview)-512BD4?style=flat&logo=dotnet)](https://dotnet.microsoft.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-336791?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![CI Pipeline](https://github.com/Ibrahim-Hassan74/TicketFlow/actions/workflows/ci.yml/badge.svg)](https://github.com/Ibrahim-Hassan74/TicketFlow/actions/workflows/ci.yml)
+[![CD Pipeline](https://github.com/Ibrahim-Hassan74/TicketFlow/actions/workflows/cd.yml/badge.svg)](https://github.com/Ibrahim-Hassan74/TicketFlow/actions/workflows/cd.yml)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%204--Layer%20%2B%20CQRS-blue.svg)](https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/common-web-application-architectures)
 [![Dapper](https://img.shields.io/badge/Read%20Path-Dapper%20%2B%20Functions-orange.svg)](https://github.com/DapperLib/Dapper)
 [![EF Core](https://img.shields.io/badge/Write%20Path-EF%20Core%2010%20%2B%20Npgsql-green.svg)](https://learn.microsoft.com/en-us/ef/core/)
@@ -30,10 +32,11 @@ It leverages a hybrid **CQRS (Command Query Responsibility Segregation)** patter
 9. [Automated Testing Strategy (328/328 Green)](#automated-testing-strategy-328328-green)
 10. [Observability & Structured Telemetry](#observability--structured-telemetry)
 11. [Database Setup & Automated Docker Orchestration](#database-setup--automated-docker-orchestration)
-12. [Local Development & Quickstart](#local-development--quickstart)
-13. [Default Seed Credentials](#default-seed-credentials)
-14. [Changelog](#changelog)
-15. [License](#license)
+12. [CI/CD & Automated Deployment Pipeline](#cicd--automated-deployment-pipeline)
+13. [Local Development & Quickstart](#local-development--quickstart)
+14. [Default Seed Credentials](#default-seed-credentials)
+15. [Changelog](#changelog)
+16. [License](#license)
 
 ---
 
@@ -468,6 +471,12 @@ All endpoints are versioned under `/api/v1/` and enforce strict authentication p
 | `PUT` | `/api/v1/users/{id}` | `Admin` | Update user display name or active status. |
 | `GET` | `/api/v1/users/agents` | `Admin` | Retrieve active agents available for ticket assignment. |
 
+### System & Health (`/api/v1/Health`)
+
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/health` | Public | System health check, deployment verification, environment status, and UTC timestamp. |
+
 ### Interactive Testing with REST Client (`TicketFlow.API.http`)
 
 The repository includes a ready-to-run HTTP request collection located at [`TicketFlow.API/TicketFlow.API.http`](TicketFlow.API/TicketFlow.API.http).
@@ -607,6 +616,43 @@ When the PostgreSQL container starts for the first time, scripts in `TicketFlow.
    ```
    The API will wait for PostgreSQL to become healthy before launching, and Swagger will be accessible at:
    `http://localhost:5000/swagger/index.html`
+
+---
+
+## CI/CD & Automated Deployment Pipeline
+
+TicketFlow implements an enterprise-grade DevOps delivery lifecycle powered by **GitHub Actions** with automated testing, containerization, and cloud deployment:
+
+```
+[ Developer Commit / PR ]
+            │
+            ▼
+┌────────────────────────────────────────────────────────┐
+│               Continuous Integration (CI)              │
+│  ├── Stage 1: Build & Unit Tests (.NET 10 SDK)         │
+│  ├── Stage 2: Integration Tests (PostgreSQL 17 Service)│
+│  └── Stage 3: Docker Image Build Verification          │
+└───────────────────────────┬────────────────────────────┘
+                            │ (Merge to master)
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│              Continuous Deployment (CD)                │
+│  ├── Job 1: WebDeploy to MonsterASP.NET (Live Website) │
+│  └── Job 2: Build & Push Docker Image to Docker Hub    │
+└────────────────────────────────────────────────────────┘
+```
+
+### 1. Continuous Integration (`ci.yml`)
+- **Triggers**: Executed on every `push` and `pull_request` targeting `master` or `develop`, as well as on-demand via `workflow_dispatch`.
+- **Stage 1 (Build & Unit Tests)**: Compiles the solution under `Release` mode on .NET 10 and executes unit tests across `TicketFlow.Application.Tests` and `TicketFlow.API.Tests`.
+- **Stage 2 (PostgreSQL Integration Tests)**: Dynamically spins up an isolated PostgreSQL 17 Alpine container, seeds schemas and stored functions via migration scripts (`000_FullPostgreSQLInit.sql` & `001_CreateReadStoredFunctions.sql`), and runs the integration test suite (`TicketFlow.IntegrationTests`).
+- **Stage 3 (Docker Build Verification)**: Validates that the multi-stage `Dockerfile` compiles cleanly without dependency errors before any merge.
+
+### 2. Continuous Deployment (`cd.yml`)
+- **Triggers**: Automatically activated when commits are merged into the `master` production branch, or manually via `workflow_dispatch`.
+- **Parallel Deployment Jobs**:
+  1. **MonsterASP.NET WebDeploy**: Publishes `TicketFlow.API` for the `win-x86` runtime and deploys the package to MonsterASP via automated Microsoft Web Deploy (`simply-web-deploy`).
+  2. **Docker Hub Registry Push**: Builds the Linux container image and pushes to Docker Hub with dual tags: `:latest` and the immutable Git commit SHA (`:${{ github.sha }}`).
 
 ---
 
