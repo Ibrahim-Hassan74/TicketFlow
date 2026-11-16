@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using TicketFlow.Application.Common.Exceptions;
@@ -45,7 +45,7 @@ namespace TicketFlow.Application.Features.Authentication.Commands.Login
             {
                 _logger.LogInformation("User {UserId} logged in successfully.", user.Id);
                 var response = await _jwtService.CreateJwtToken(user, request.RememberMe);
-                user.RefreshToken = response?.RefreshToken;
+                user.RefreshToken = response.RefreshToken;
                 user.RefreshTokenExpirationDateTime = response.RefreshTokenExpirationDateTime;
                 await _userManager.UpdateAsync(user);
                 return response;

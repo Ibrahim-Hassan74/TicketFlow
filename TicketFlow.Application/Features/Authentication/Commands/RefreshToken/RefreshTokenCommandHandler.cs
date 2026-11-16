@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
@@ -29,7 +29,7 @@ namespace TicketFlow.Application.Features.Authentication.Commands.RefreshToken
             {
                 principal = _jwtService.GetPrincipalFromJwtToken(request.Token);
             }
-            catch (SecurityTokenException ex)
+            catch (SecurityTokenException)
             {
                 throw new InvalidTokenException("Access token is invalid.");
             }
@@ -61,7 +61,7 @@ namespace TicketFlow.Application.Features.Authentication.Commands.RefreshToken
             var authResponse = await _jwtService.CreateJwtToken(user, rememberMe);
 
 
-            user.RefreshToken = authResponse?.RefreshToken;
+            user.RefreshToken = authResponse.RefreshToken;
 
             user.RefreshTokenExpirationDateTime = authResponse.RefreshTokenExpirationDateTime;
 
