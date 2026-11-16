@@ -26,6 +26,18 @@
 
 
 # ==============================================================================
+# 0. HEALTH & DEPLOYMENT VERIFICATION ENDPOINTS
+# ==============================================================================
+
+### Check API Health & Deployment Status (Public / No Auth Required)
+GET {{baseUrl}}/api/{{apiVersion}}/health
+Accept: application/json
+
+### Check Live MonsterASP Deployed Health
+GET https://support-ticket.runasp.net/api/v1/health
+Accept: application/json
+
+# ==============================================================================
 # 1. AUTHENTICATION & ACCOUNT ENDPOINTS
 # ==============================================================================
 

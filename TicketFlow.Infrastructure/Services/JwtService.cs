@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using Microsoft.Extensions.Logging;
@@ -42,7 +42,7 @@ namespace TicketFlow.Infrastructure.Services
                  new Claim(JwtRegisteredClaimNames.Iat,
                     new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64), //Issued at (date and time of token generation)
                  new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), //Unique name identifier of the user Id
-                 new Claim(ClaimTypes.Email, user.Email), //Email of the user
+                 new Claim(ClaimTypes.Email, user.Email ?? string.Empty), //Email of the user
                  new Claim("remember_me", rememberMe.ToString().ToLower())
              };
 
@@ -62,7 +62,7 @@ namespace TicketFlow.Infrastructure.Services
             }
 
             // Create a SymmetricSecurityKey object using the key specified in the configuration.
-            SymmetricSecurityKey securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+            SymmetricSecurityKey securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
 
             // Create a SigningCredentials object with the security key and the HMACSHA256 algorithm.
             SigningCredentials signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -117,7 +117,7 @@ namespace TicketFlow.Infrastructure.Services
                 ValidateLifetime = false,
                 ValidIssuer = _configuration["Jwt:Issuer"],
                 ValidAudiences = _configuration.GetSection("Jwt:Audiences").Get<List<string>>(),
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"])),
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!)),
                 RoleClaimType = ClaimTypes.Role
             };
 

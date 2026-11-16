@@ -2,7 +2,7 @@ name: CD Pipeline (Deploy & Push)
 
 on:
   push:
-    branches: ["master", "feature/ci-cd-pipeline"]
+    branches: ["master"]
   workflow_dispatch:
 
 env:
@@ -41,7 +41,7 @@ jobs:
           server-computer-name: ${{ secrets.SERVER_COMPUTER_NAME }}
           server-username: ${{ secrets.SERVER_USERNAME }}
           server-password: ${{ secrets.SERVER_PASSWORD }}
-          source-path: 'publish'
+          source-path: "publish"
 
   # Job 2: Build & Push Docker Image to Docker Hub
   push-to-dockerhub:
