@@ -32,7 +32,7 @@ jobs:
         run: dotnet build TicketFlow.slnx --configuration Release --no-restore
 
       - name: Publish API Project
-        run: dotnet publish TicketFlow.API/TicketFlow.API.csproj --configuration Release --output ./publish --runtime win-x86
+        run: dotnet publish TicketFlow.API/TicketFlow.API.csproj --configuration Release --output "${{ github.workspace }}/publish" --runtime win-x86
 
       - name: Deploy to MonsterASP.NET via WebDeploy
         uses: rasmusbuchholdt/simply-web-deploy@2.2.0
@@ -41,7 +41,7 @@ jobs:
           server-computer-name: ${{ secrets.SERVER_COMPUTER_NAME }}
           server-username: ${{ secrets.SERVER_USERNAME }}
           server-password: ${{ secrets.SERVER_PASSWORD }}
-          source-path: './publish/'
+          source-path: 'publish'
 
   # Job 2: Build & Push Docker Image to Docker Hub
   push-to-dockerhub:
