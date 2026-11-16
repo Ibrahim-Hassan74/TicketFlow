@@ -53,4 +53,7 @@ app.MapControllers();
 
 app.Run();
 
+/// <summary>
+/// Application entry point.
+/// </summary>
 public partial class Program { }
