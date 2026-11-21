@@ -3,6 +3,15 @@ name: CD Pipeline (Deploy & Push)
 on:
   push:
     branches: ["master"]
+    paths:
+      - "TicketFlow.*/**"
+      - "TicketFlow.slnx"
+      - "Dockerfile"
+      - ".dockerignore"
+      - "docker-compose.yml"
+      - ".github/workflows/cd.yml"
+      - "!**.md"
+      - "!**.example"
   workflow_dispatch:
 
 env:
