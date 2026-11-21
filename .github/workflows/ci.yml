@@ -3,8 +3,26 @@ name: CI Pipeline
 on:
   push:
     branches: ["master", "develop"]
+    paths:
+      - "TicketFlow.*/**"
+      - "TicketFlow.slnx"
+      - "Dockerfile"
+      - ".dockerignore"
+      - "docker-compose.yml"
+      - ".github/workflows/ci.yml"
+      - "!**.md"
+      - "!**.example"
   pull_request:
     branches: ["master", "develop"]
+    paths:
+      - "TicketFlow.*/**"
+      - "TicketFlow.slnx"
+      - "Dockerfile"
+      - ".dockerignore"
+      - "docker-compose.yml"
+      - ".github/workflows/ci.yml"
+      - "!**.md"
+      - "!**.example"
   workflow_dispatch:
 
 env:
